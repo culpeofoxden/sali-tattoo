@@ -1,9 +1,936 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Vita Tattoo</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sa.li Tattoo is a fine line and delicate tattoo artist in London creating elegant, custom pieces with a calm luxury studio experience.">
+  <title>Sa.li Tattoo | Fine Line Tattoo Artist in London</title>
+  <style>
+    :root {
+      --surface: rgba(255, 252, 247, 0.82);
+      --text: #3f372f;
+      --text-muted: #7b7167;
+      --gold: #b79869;
+      --shadow: 0 24px 70px rgba(88, 72, 52, 0.1);
+      --radius-lg: 32px;
+      --radius-md: 22px;
+      --radius-sm: 16px;
+      --container: 1180px;
+      --transition: 280ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 34%),
+        radial-gradient(circle at top right, rgba(183, 152, 105, 0.12), transparent 28%),
+        linear-gradient(180deg, #fffdf9 0%, #f8f2ea 45%, #f3ede5 100%);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.2), transparent 65%);
+      opacity: 0.25;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(calc(100% - 2rem), var(--container));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(18px);
+      background: rgba(251, 248, 243, 0.74);
+      border-bottom: 1px solid rgba(96, 79, 58, 0.08);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      width: 2.75rem;
+      height: 2.75rem;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(183, 152, 105, 0.45);
+      color: var(--gold);
+      background: rgba(255, 255, 255, 0.75);
+      box-shadow: inset 0 0 0 7px rgba(183, 152, 105, 0.06);
+      font-size: 0.95rem;
+    }
+
+    .nav-links {
+      display: none;
+      align-items: center;
+      gap: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .nav-links a {
+      position: relative;
+      padding-bottom: 0.2rem;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform var(--transition);
+    }
+
+    .nav-links a:hover::after,
+    .nav-links a:focus-visible::after {
+      transform: scaleX(1);
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      padding: 0.95rem 1.5rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition), border-color var(--transition);
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #c6aa7e, #af8c5a);
+      color: #fffaf4;
+      box-shadow: 0 18px 35px rgba(175, 140, 90, 0.22);
+    }
+
+    .button-secondary {
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--text);
+      border-color: rgba(183, 152, 105, 0.24);
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 34px rgba(90, 72, 49, 0.12);
+    }
+
+    .hero {
+      padding: 4.5rem 0 3rem;
+    }
+
+    .hero-grid {
+      display: grid;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(183, 152, 105, 0.18);
+      color: var(--text-muted);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 0.76rem;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 6px rgba(183, 152, 105, 0.12);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    h1 {
+      margin-top: 1.2rem;
+      font-size: clamp(3.2rem, 9vw, 6.4rem);
+    }
+
+    .hero-copy p {
+      margin: 1.4rem 0 0;
+      max-width: 38rem;
+      color: var(--text-muted);
+      font-size: clamp(1rem, 2vw, 1.15rem);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      margin-top: 2rem;
+    }
+
+    .hero-note {
+      margin-top: 1.15rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .hero-card,
+    .section-shell {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(183, 152, 105, 0.16);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-card {
+      position: relative;
+      min-height: 460px;
+      padding: 1.1rem;
+      background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(247, 240, 232, 0.74)),
+        linear-gradient(135deg, rgba(183, 152, 105, 0.12), transparent 55%);
+      overflow: hidden;
+    }
+
+    .hero-art {
+      height: 100%;
+      min-height: 438px;
+      border-radius: calc(var(--radius-lg) - 10px);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(248, 238, 226, 0.88)),
+        radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.85), transparent 30%),
+        radial-gradient(circle at 78% 16%, rgba(183, 152, 105, 0.25), transparent 24%),
+        radial-gradient(circle at 82% 82%, rgba(214, 194, 162, 0.42), transparent 32%);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .hero-art::before,
+    .hero-art::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(183, 152, 105, 0.2);
+    }
+
+    .hero-art::before {
+      width: 22rem;
+      height: 22rem;
+      right: -6rem;
+      top: -5rem;
+      background: radial-gradient(circle, rgba(183, 152, 105, 0.1), transparent 66%);
+    }
+
+    .hero-art::after {
+      width: 16rem;
+      height: 16rem;
+      left: -4rem;
+      bottom: -6rem;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 62%);
+    }
+
+    .line-drawing svg {
+      position: absolute;
+      inset: 8% 12%;
+      width: 76%;
+      height: 84%;
+      opacity: 0.72;
+    }
+
+    .floating-card {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 1rem 1.1rem;
+      border-radius: 20px;
+      background: rgba(255, 252, 247, 0.78);
+      border: 1px solid rgba(183, 152, 105, 0.18);
+      box-shadow: 0 16px 28px rgba(92, 75, 52, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .floating-card small {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.7rem;
+    }
+
+    .floating-card strong {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .floating-top {
+      top: 1.3rem;
+      right: 1.3rem;
+    }
+
+    .floating-bottom {
+      left: 1.3rem;
+      bottom: 1.3rem;
+    }
+
+    .stats,
+    .about-grid,
+    .booking-grid,
+    .contact-grid,
+    .faq-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .stats {
+      margin-top: 1.6rem;
+    }
+
+    .stat,
+    .panel {
+      padding: 1.25rem 1.4rem;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(183, 152, 105, 0.14);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.35rem;
+      margin-bottom: 0.35rem;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 500;
+    }
+
+    section {
+      padding: 1.6rem 0 0;
+    }
+
+    .section-shell {
+      padding: 1.6rem;
+      background: var(--surface);
+    }
+
+    .section-head {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .section-head p,
+    .panel p,
+    .panel li,
+    .stat span,
+    details p {
+      color: var(--text-muted);
+    }
+
+    .panel h3 {
+      margin-bottom: 0.85rem;
+      font-size: 1.55rem;
+    }
+
+    .feature-list {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .feature-list li {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .feature-list li::before {
+      content: "";
+      width: 0.7rem;
+      height: 0.7rem;
+      margin-top: 0.45rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold), #ccb48e);
+      box-shadow: 0 0 0 7px rgba(183, 152, 105, 0.12);
+      flex-shrink: 0;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.9rem;
+    }
+
+    .gallery-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 220px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(53, 41, 30, 0.28)),
+        var(--card-image, linear-gradient(135deg, #f0e6db, #d6c5b2));
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 16px 32px rgba(79, 61, 39, 0.12);
+      isolation: isolate;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .gallery-card:nth-child(3n + 1) {
+      min-height: 280px;
+    }
+
+    .gallery-card:nth-child(4n + 2) {
+      min-height: 340px;
+    }
+
+    .gallery-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(54, 39, 27, 0.62) 100%);
+      opacity: 0.9;
+      transition: opacity var(--transition);
+    }
+
+    .gallery-card::after {
+      content: "";
+      position: absolute;
+      inset: 1rem;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 246, 235, 0.28);
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity var(--transition), transform var(--transition);
+    }
+
+    .gallery-card:hover,
+    .gallery-card:focus-visible {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 44px rgba(74, 58, 37, 0.16);
+    }
+
+    .gallery-card:hover::after,
+    .gallery-card:focus-visible::after {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .gallery-meta {
+      position: absolute;
+      inset: auto 1.1rem 1rem 1.1rem;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 1rem;
+      color: #fffaf5;
+    }
+
+    .gallery-meta strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .gallery-meta span,
+    .gallery-tag {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .gallery-tag {
+      padding: 0.45rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(255, 251, 245, 0.16);
+      backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+
+    .steps {
+      counter-reset: step;
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      padding: 1rem 1.05rem;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(183, 152, 105, 0.12);
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step, decimal-leading-zero);
+      display: grid;
+      place-items: center;
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      background: rgba(183, 152, 105, 0.12);
+      color: var(--gold);
+      font-size: 0.88rem;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    details {
+      border-radius: 18px;
+      padding: 1rem 1.1rem;
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(183, 152, 105, 0.12);
+    }
+
+    details + details {
+      margin-top: 0.85rem;
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: 600;
+      padding-right: 1.5rem;
+      position: relative;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: "+";
+      position: absolute;
+      right: 0;
+      top: 0;
+      color: var(--gold);
+      font-size: 1.15rem;
+      transition: transform var(--transition);
+    }
+
+    details[open] summary::after {
+      transform: rotate(45deg);
+    }
+
+    .contact-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 100%;
+    }
+
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 600;
+    }
+
+    .contact-link span:last-child {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .footer {
+      padding: 2.5rem 0 3rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      align-items: center;
+      text-align: center;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 700ms ease, transform 700ms ease;
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (min-width: 720px) {
+      .nav-links {
+        display: flex;
+      }
+
+      .hero {
+        padding: 5.5rem 0 3.5rem;
+      }
+
+      .about-grid,
+      .booking-grid,
+      .contact-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+      }
+
+      .faq-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-flow: dense;
+      }
+
+      .gallery-card:nth-child(6n + 2) {
+        grid-row: span 2;
+      }
+
+      .gallery-card:nth-child(6n + 5) {
+        grid-column: span 2;
+      }
+    }
+
+    @media (min-width: 960px) {
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+        gap: 3rem;
+      }
+
+      .section-shell {
+        padding: 2rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Coming soon</h1>
+  <header class="site-header">
+    <div class="container">
+      <nav class="nav" aria-label="Primary">
+        <a class="brand" href="#top" aria-label="Sa.li Tattoo home">
+          <span class="brand-mark">SL</span>
+          <span>Sa.li Tattoo</span>
+        </a>
+        <div class="nav-links">
+          <a href="#about">About</a>
+          <a href="#gallery">Gallery</a>
+          <a href="#booking">Booking</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <a class="button button-secondary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Book now</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-copy reveal">
+            <span class="eyebrow">London Fine Line Artist</span>
+            <h1>Sa.li Tattoo</h1>
+            <p>Fine line and delicate tattooing for those drawn to subtle detail, soft storytelling, and timeless placement. Designed with care in London.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Book now</a>
+              <a class="button button-secondary" href="#gallery">View gallery</a>
+            </div>
+            <p class="hero-note">Private booking enquiries and design discussions are handled via Instagram.</p>
+            <div class="stats">
+              <div class="stat">
+                <strong>Fine Line</strong>
+                <span>Elegant, delicate pieces with a soft luxury finish.</span>
+              </div>
+              <div class="stat">
+                <strong>Custom Work</strong>
+                <span>Thoughtful designs tailored to placement and intention.</span>
+              </div>
+              <div class="stat">
+                <strong>London</strong>
+                <span>Available for clients seeking refined, personal tattooing.</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-card reveal">
+            <div class="hero-art" aria-hidden="true">
+              <div class="line-drawing">
+                <svg viewBox="0 0 500 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M334 111C304 79 258 73 219 95C179 118 159 159 163 207C167 255 190 283 212 319C237 360 250 390 247 432C244 476 220 501 195 522C175 540 170 563 179 584C191 611 220 620 251 617C290 614 326 591 341 551C356 512 348 472 322 438C299 408 269 390 256 347C246 314 253 280 276 255C303 226 344 220 374 241C404 263 416 303 404 340C396 364 380 387 360 403" stroke="#8B7760" stroke-width="3.2" stroke-linecap="round" opacity="0.5"/>
+                  <path d="M184 210C188 190 203 174 223 169C243 164 266 171 279 188C290 203 294 223 291 242C287 267 271 289 251 309C229 330 206 348 189 370C170 393 159 420 161 450" stroke="#9F8A73" stroke-width="2.4" stroke-linecap="round" opacity="0.45"/>
+                  <path d="M227 156C214 136 203 121 205 102C208 77 233 62 257 68C282 74 298 100 292 124C286 148 268 164 252 180" stroke="#B59B7C" stroke-width="2.1" stroke-linecap="round" opacity="0.42"/>
+                </svg>
+              </div>
+              <div class="floating-card floating-top">
+                <small>Signature Style</small>
+                <strong>Fine line, floral, subtle detail</strong>
+              </div>
+              <div class="floating-card floating-bottom">
+                <small>Booking</small>
+                <strong>DM on Instagram for enquiries</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="container">
+        <div class="section-shell reveal">
+          <div class="section-head">
+            <span class="eyebrow">About</span>
+            <h2>Delicate tattoos with a calm, considered approach.</h2>
+            <p>Sa.li Tattoo creates elegant fine line work for clients who want something understated, feminine, and deeply personal. Every piece is designed to feel light on the skin while still carrying intention and presence.</p>
+          </div>
+          <div class="about-grid">
+            <div class="panel">
+              <h3>Refined artistry, personal detail</h3>
+              <p>From soft florals to minimal symbolic work, each tattoo is approached with a clean eye for composition, flow, and longevity. The experience is thoughtful from consultation to aftercare, with a focus on making clients feel comfortable and beautifully looked after.</p>
+            </div>
+            <div class="panel">
+              <ul class="feature-list">
+                <li>Specialising in fine line, delicate ornament, botanical and micro-detail tattoos.</li>
+                <li>Custom placements designed to complement the natural shape and movement of the body.</li>
+                <li>Ideal for first tattoos, meaningful keepsakes, and quietly luxurious statement pieces.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gallery">
+      <div class="container">
+        <div class="section-shell reveal">
+          <div class="section-head">
+            <span class="eyebrow">Gallery</span>
+            <h2>A curated selection of recent work</h2>
+            <p>Placeholder image blocks are ready to swap with Instagram exports. Replace each card background with local files like <code>img1.jpg</code>, <code>img2.jpg</code>, and so on for a seamless update later.</p>
+          </div>
+          <div class="gallery-grid">
+            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(246, 234, 222, 0.25), rgba(197, 171, 143, 0.40)), url('img1.jpg');">
+              <div class="gallery-meta"><div><strong>img1.jpg</strong><span>Fine line floral</span></div><div class="gallery-tag">Replaceable</div></div>
+            </article>
+            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(248, 238, 227, 0.22), rgba(188, 162, 130, 0.42)), url('img2.jpg');">
+              <div class="gallery-meta"><div><strong>img2.jpg</strong><span>Minimal detail</span></div><div class="gallery-tag">Instagram</div></div>
+            </article>
+            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(252, 246, 239, 0.18), rgba(195, 171, 145, 0.40)), url('img3.jpg');">
+              <div class="gallery-meta"><div><strong>img3.jpg</strong><span>Custom design</span></div><div class="gallery-tag">London</div></div>
+            </article>
+            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(246, 234, 220, 0.18), rgba(166, 141, 111, 0.42)), url('img4.jpg');">
+              <div class="gallery-meta"><div><strong>img4.jpg</strong><span>Delicate linework</span></div><div class="gallery-tag">Fine line</div></div>
+            </article>
+            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(255, 247, 240, 0.18), rgba(181, 156, 124, 0.44)), url('img5.jpg');">
+              <div class="gallery-meta"><div><strong>img5.jpg</strong><span>Soft composition</span></div><div class="gallery-tag">Elegant</div></div>
+            </article>
+            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(251, 241, 230, 0.18), rgba(168, 143, 114, 0.46)), url('img6.jpg');">
+              <div class="gallery-meta"><div><strong>img6.jpg</strong><span>Micro realism accent</span></div><div class="gallery-tag">Premium</div></div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="booking">
+      <div class="container">
+        <div class="section-shell reveal">
+          <div class="section-head">
+            <span class="eyebrow">Booking</span>
+            <h2>Private, direct, and simple to enquire</h2>
+            <p>Bookings are managed through Instagram so references, placement ideas, and inspiration can be shared easily in one conversation.</p>
+          </div>
+          <div class="booking-grid">
+            <div class="panel">
+              <h3>How to book</h3>
+              <div class="steps">
+                <div class="step"><div><strong>Send a DM</strong><p>Introduce your idea, preferred size, placement, and whether the design is custom or inspired by an existing reference.</p></div></div>
+                <div class="step"><div><strong>Share references</strong><p>Mood images and placement photos help shape a tattoo that feels balanced, subtle, and personal.</p></div></div>
+                <div class="step"><div><strong>Confirm your session</strong><p>Once your concept is aligned, appointment details and preparation guidance can be shared directly.</p></div></div>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Booking note</h3>
+              <p>For the smoothest response, include your concept, placement, approximate size, and any dates you have in mind. Fine line pieces often benefit from a little extra planning so the final result feels effortless and enduring.</p>
+              <a class="button button-primary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Book via Instagram</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="container">
+        <div class="section-shell reveal">
+          <div class="section-head">
+            <span class="eyebrow">FAQ</span>
+            <h2>Everything you may want to know before your appointment</h2>
+            <p>These answers set a calm, polished tone while leaving room to personalise details later.</p>
+          </div>
+          <div class="faq-grid">
+            <div>
+              <details open>
+                <summary>How should I prepare for my tattoo appointment?</summary>
+                <p>Arrive well rested, hydrated, and having eaten beforehand. Avoid alcohol before your appointment and wear something comfortable that makes the tattoo area easy to access.</p>
+              </details>
+              <details>
+                <summary>How does healing work for fine line tattoos?</summary>
+                <p>Healing is usually straightforward with the right aftercare. Keep the area clean, avoid soaking or friction, and follow the aftercare guidance shared during your appointment.</p>
+              </details>
+            </div>
+            <div>
+              <details>
+                <summary>How is pricing decided?</summary>
+                <p>Pricing depends on size, placement, complexity, and session time. The best way to get an accurate quote is to send your idea and references through Instagram.</p>
+              </details>
+              <details>
+                <summary>Do you offer custom designs?</summary>
+                <p>Yes. Custom work is welcome, especially for delicate concepts that need thoughtful composition and placement. Reference imagery is helpful, but each design is refined to suit you.</p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="container">
+        <div class="section-shell reveal">
+          <div class="section-head">
+            <span class="eyebrow">Contact</span>
+            <h2>Enquiries and bookings in London</h2>
+            <p>For appointment requests, collaborations, or design questions, Instagram is the best first point of contact.</p>
+          </div>
+          <div class="contact-grid">
+            <div class="panel contact-card">
+              <div>
+                <h3>Instagram</h3>
+                <a class="contact-link" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">
+                  <span>@sa.li_tattoo</span>
+                  <span>Open profile</span>
+                </a>
+              </div>
+              <a class="button button-primary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Book now</a>
+            </div>
+            <div class="panel contact-card">
+              <div>
+                <h3>Location</h3>
+                <p>London, United Kingdom</p>
+                <p>Exact studio details can be shared directly during the booking process.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <strong>Sa.li Tattoo</strong>
+        <span>Fine line and delicate tattoo artist in London.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.18 });
+
+    document.querySelectorAll(".reveal").forEach((element) => {
+      observer.observe(element);
+    });
+  </script>
 </body>
 </html>
