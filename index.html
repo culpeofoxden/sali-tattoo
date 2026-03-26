@@ -91,14 +91,14 @@
     .brand-mark {
       width: 2.75rem;
       height: 2.75rem;
-      display: grid;
-      place-items: center;
+      display: block;
       border-radius: 50%;
       border: 1px solid rgba(183, 152, 105, 0.45);
-      color: var(--gold);
-      background: rgba(255, 255, 255, 0.75);
+      background: #ffffff;
       box-shadow: inset 0 0 0 7px rgba(183, 152, 105, 0.06);
-      font-size: 0.95rem;
+      object-fit: cover;
+      object-position: center;
+      padding: 0.12rem;
     }
 
     .nav-links {
@@ -659,7 +659,7 @@
     <div class="container">
       <nav class="nav" aria-label="Primary">
         <a class="brand" href="#top" aria-label="Sa.li Tattoo home">
-          <span class="brand-mark">SL</span>
+          <img class="brand-mark" src="images/logo.jpg" alt="Sa.li Tattoo logo">
           <span>Sa.li Tattoo</span>
         </a>
         <div class="nav-links">
