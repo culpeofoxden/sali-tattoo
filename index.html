@@ -327,7 +327,7 @@
     .about-grid,
     .booking-grid,
     .contact-grid,
-    .faq-grid {
+    .sketch-grid {
       display: grid;
       gap: 1rem;
     }
@@ -412,6 +412,10 @@
       gap: 0.9rem;
     }
 
+    .sketch-grid {
+      grid-template-columns: 1fr;
+    }
+
     .gallery-card {
       position: relative;
       overflow: hidden;
@@ -463,6 +467,77 @@
     .gallery-card:focus-visible::after {
       opacity: 1;
       transform: scale(1);
+    }
+
+    .sketch-card {
+      position: relative;
+      min-height: 260px;
+      overflow: hidden;
+      border-radius: 26px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 252, 0.88), rgba(241, 247, 241, 0.94));
+      border: 1px solid rgba(127, 160, 138, 0.14);
+      box-shadow: 0 20px 40px rgba(73, 95, 80, 0.10);
+    }
+
+    .sketch-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top right, rgba(127, 160, 138, 0.10), transparent 34%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(95, 116, 105, 0.035) 0,
+          rgba(95, 116, 105, 0.035) 1px,
+          transparent 1px,
+          transparent 34px
+        );
+      pointer-events: none;
+    }
+
+    .sketch-card::after {
+      content: "";
+      position: absolute;
+      inset: 1rem;
+      border-radius: 20px;
+      border: 1px solid rgba(127, 160, 138, 0.10);
+      pointer-events: none;
+    }
+
+    .sketch-card-inner {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+      padding: 1.4rem;
+    }
+
+    .sketch-card small {
+      display: inline-flex;
+      align-self: flex-start;
+      margin-bottom: 0.8rem;
+      padding: 0.45rem 0.72rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(127, 160, 138, 0.15);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .sketch-card h3 {
+      font-size: 1.35rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .sketch-card p {
+      margin: 0;
+      max-width: 28rem;
+      color: var(--text-muted);
     }
 
     .steps {
@@ -594,10 +669,6 @@
         grid-template-columns: 1.1fr 0.9fr;
       }
 
-      .faq-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
       .stats {
         grid-template-columns: repeat(3, 1fr);
       }
@@ -605,6 +676,20 @@
       .gallery-grid {
         grid-template-columns: repeat(3, 1fr);
         grid-auto-flow: dense;
+      }
+
+      .sketch-grid {
+        grid-template-columns: 1.15fr 0.85fr 1fr;
+      }
+
+      .sketch-card:first-child {
+        grid-row: span 2;
+        min-height: 540px;
+      }
+
+      .sketch-card:nth-child(4) {
+        grid-column: span 2;
+        min-height: 240px;
       }
 
       .gallery-card:nth-child(6n + 2) {
@@ -657,8 +742,8 @@
         <div class="nav-links">
           <a href="#about">About</a>
           <a href="#gallery">Gallery</a>
-          <a href="#booking">Booking</a>
-          <a href="#faq">FAQ</a>
+          <a href="#booking">Custom Design</a>
+          <a href="#sketches">Sketches</a>
           <a href="#contact">Contact</a>
         </div>
         <a class="button button-secondary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Book now</a>
@@ -785,58 +870,67 @@
       <div class="container">
         <div class="section-shell reveal">
           <div class="section-head">
-            <span class="eyebrow">Booking</span>
-            <h2>Private, direct, and simple to enquire</h2>
-            <p>Bookings are managed through Instagram so references, placement ideas, and inspiration can be shared easily in one conversation.</p>
+            <span class="eyebrow">Custom Design</span>
+            <h2>Sketch development tailored to your idea, placement, and mood</h2>
+            <p>Every custom tattoo starts as a conversation, then becomes a carefully developed sketch designed to feel natural on the body and personal to you.</p>
           </div>
           <div class="booking-grid">
             <div class="panel">
-              <h3>How to book</h3>
+              <h3>How a custom sketch is developed</h3>
               <div class="steps">
-                <div class="step"><div><strong>Send a DM</strong><p>Introduce your idea, preferred size, placement, and whether the design is custom or inspired by an existing reference.</p></div></div>
-                <div class="step"><div><strong>Share references</strong><p>Mood images and placement photos help shape a tattoo that feels balanced, subtle, and personal.</p></div></div>
-                <div class="step"><div><strong>Confirm your session</strong><p>Once your concept is aligned, appointment details and preparation guidance can be shared directly.</p></div></div>
+                <div class="step"><div><strong>Share your idea</strong><p>Send the concept, placement, size, references, and the feeling you want the piece to carry.</p></div></div>
+                <div class="step"><div><strong>Build the composition</strong><p>The sketch is shaped around your body and refined into something balanced, expressive, and wearable.</p></div></div>
+                <div class="step"><div><strong>Refine the final design</strong><p>Before the session, the concept is polished into a custom piece ready to become your tattoo.</p></div></div>
               </div>
             </div>
             <div class="panel">
-              <h3>Booking note</h3>
-              <p>For the smoothest response, include your concept, placement, approximate size, and any dates you have in mind. Fine line pieces often benefit from a little extra planning so the final result feels effortless and enduring.</p>
-              <a class="button button-primary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Book via Instagram</a>
+              <h3>About the sketching stage</h3>
+              <p>This is where references, symbols, flowers, ornaments, and personal details begin to come together into something truly yours. Graphic and fine line work often depends on a very thoughtful drawing stage.</p>
+              <p>The goal is not just to make a beautiful tattoo, but to create a composition that feels soft, intentional, and fully connected to placement.</p>
+              <a class="button button-primary" href="https://www.instagram.com/sa.li_tattoo/" target="_blank" rel="noreferrer">Start your custom design</a>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="faq">
+    <section id="sketches">
       <div class="container">
         <div class="section-shell reveal">
           <div class="section-head">
-            <span class="eyebrow">FAQ</span>
-            <h2>Everything you may want to know before your appointment</h2>
-            <p>These answers set a calm, polished tone while leaving room to personalise details later.</p>
+            <span class="eyebrow">Sketches</span>
+            <h2>Custom sketch gallery and concept direction</h2>
+            <p>A separate space for draft ideas, custom concepts, and future sketch uploads. It gives the site room to show the creative process behind the final tattoos.</p>
           </div>
-          <div class="faq-grid">
-            <div>
-              <details open>
-                <summary>How should I prepare for my tattoo appointment?</summary>
-                <p>Arrive well rested, hydrated, and having eaten beforehand. Avoid alcohol before your appointment and wear something comfortable that makes the tattoo area easy to access.</p>
-              </details>
-              <details>
-                <summary>How does healing work for fine line tattoos?</summary>
-                <p>Healing is usually straightforward with the right aftercare. Keep the area clean, avoid soaking or friction, and follow the aftercare guidance shared during your appointment.</p>
-              </details>
-            </div>
-            <div>
-              <details>
-                <summary>How is pricing decided?</summary>
-                <p>Pricing depends on size, placement, complexity, and session time. The best way to get an accurate quote is to send your idea and references through Instagram.</p>
-              </details>
-              <details>
-                <summary>Do you offer custom designs?</summary>
-                <p>Yes. Custom work is welcome, especially for delicate concepts that need thoughtful composition and placement. Reference imagery is helpful, but each design is refined to suit you.</p>
-              </details>
-            </div>
+          <div class="sketch-grid">
+            <article class="sketch-card">
+              <div class="sketch-card-inner">
+                <small>Custom concept</small>
+                <h3>Botanical and symbolic sketch compositions</h3>
+                <p>For elegant custom pieces built around movement, placement, and refined line balance.</p>
+              </div>
+            </article>
+            <article class="sketch-card">
+              <div class="sketch-card-inner">
+                <small>Fine line draft</small>
+                <h3>Soft placement studies</h3>
+                <p>Created to sit naturally on the body and feel subtle, clean, and intentional.</p>
+              </div>
+            </article>
+            <article class="sketch-card">
+              <div class="sketch-card-inner">
+                <small>Graphic study</small>
+                <h3>Minimal statement ideas</h3>
+                <p>Concepts for pieces that stay delicate while still carrying character and identity.</p>
+              </div>
+            </article>
+            <article class="sketch-card">
+              <div class="sketch-card-inner">
+                <small>Ready for uploads</small>
+                <h3>Add real sketch images here</h3>
+                <p>If you add files like <code>sketch-01.jpg</code> to the project, I can replace these cards with a real sketches gallery too.</p>
+              </div>
+            </article>
           </div>
         </div>
       </div>
