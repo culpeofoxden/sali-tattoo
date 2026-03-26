@@ -255,45 +255,37 @@
       min-height: 438px;
       border-radius: calc(var(--radius-lg) - 10px);
       background:
-        linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(239, 246, 240, 0.9)),
-        radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.85), transparent 30%),
-        radial-gradient(circle at 78% 16%, rgba(127, 160, 138, 0.25), transparent 24%),
-        radial-gradient(circle at 82% 82%, rgba(193, 214, 200, 0.42), transparent 32%);
+        linear-gradient(180deg, rgba(249, 252, 248, 0.10), rgba(240, 246, 240, 0.22)),
+        url('images/vita.jpg');
+      background-size: cover;
+      background-position: center 35%;
       position: relative;
       overflow: hidden;
       isolation: isolate;
     }
 
-    .hero-art::before,
+    .hero-art::before {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 45%;
+      right: 0;
+      top: 0;
+      border-radius: 0 0 50% 50%;
+      border: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent);
+    }
+
     .hero-art::after {
       content: "";
       position: absolute;
-      border-radius: 50%;
-      border: 1px solid rgba(127, 160, 138, 0.2);
-    }
-
-    .hero-art::before {
-      width: 22rem;
-      height: 22rem;
-      right: -6rem;
-      top: -5rem;
-      background: radial-gradient(circle, rgba(127, 160, 138, 0.12), transparent 66%);
-    }
-
-    .hero-art::after {
-      width: 16rem;
-      height: 16rem;
-      left: -4rem;
-      bottom: -6rem;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 62%);
-    }
-
-    .line-drawing svg {
-      position: absolute;
-      inset: 8% 12%;
-      width: 76%;
-      height: 84%;
-      opacity: 0.72;
+      width: 100%;
+      height: 42%;
+      left: 0;
+      bottom: 0;
+      border: none;
+      border-radius: 50% 50% 0 0;
+      background: linear-gradient(0deg, rgba(247, 250, 247, 0.28), transparent);
     }
 
     .floating-card {
@@ -704,13 +696,6 @@
           </div>
           <div class="hero-card reveal">
             <div class="hero-art" aria-hidden="true">
-              <div class="line-drawing">
-                <svg viewBox="0 0 500 700" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M334 111C304 79 258 73 219 95C179 118 159 159 163 207C167 255 190 283 212 319C237 360 250 390 247 432C244 476 220 501 195 522C175 540 170 563 179 584C191 611 220 620 251 617C290 614 326 591 341 551C356 512 348 472 322 438C299 408 269 390 256 347C246 314 253 280 276 255C303 226 344 220 374 241C404 263 416 303 404 340C396 364 380 387 360 403" stroke="#8B7760" stroke-width="3.2" stroke-linecap="round" opacity="0.5"/>
-                  <path d="M184 210C188 190 203 174 223 169C243 164 266 171 279 188C290 203 294 223 291 242C287 267 271 289 251 309C229 330 206 348 189 370C170 393 159 420 161 450" stroke="#9F8A73" stroke-width="2.4" stroke-linecap="round" opacity="0.45"/>
-                  <path d="M227 156C214 136 203 121 205 102C208 77 233 62 257 68C282 74 298 100 292 124C286 148 268 164 252 180" stroke="#B59B7C" stroke-width="2.1" stroke-linecap="round" opacity="0.42"/>
-                </svg>
-              </div>
               <div class="floating-card floating-top">
                 <small>Signature Style</small>
                 <strong>Fine line, floral, subtle detail</strong>
@@ -730,19 +715,19 @@
         <div class="section-shell reveal">
           <div class="section-head">
             <span class="eyebrow">About</span>
-            <h2>Delicate tattoos with a calm, considered approach.</h2>
-            <p>Sa.li Tattoo creates elegant fine line work for clients who want something understated, feminine, and deeply personal. Every piece is designed to feel light on the skin while still carrying intention and presence.</p>
+            <h2>Artist from Ukraine with a warm, personal approach to every piece.</h2>
+            <p>On weekdays, Vita is a tattoo artist. On weekends, a cat listener and a dog dreamer. She works mainly in graphic and fine line styles, bringing four years of experience and a calm, creative energy to every tattoo she creates.</p>
           </div>
           <div class="about-grid">
             <div class="panel">
-              <h3>Refined artistry, personal detail</h3>
-              <p>From soft florals to minimal symbolic work, each tattoo is approached with a clean eye for composition, flow, and longevity. The experience is thoughtful from consultation to aftercare, with a focus on making clients feel comfortable and beautifully looked after.</p>
+              <h3>Thoughtful work, recharged with the best energy</h3>
+              <p>Each design is created with care, intuition, and attention to placement, rhythm, and detail. To create for you, Vita recharges only with the best energy: fruits. The result is work that feels expressive, personal, and full of life without losing its refined finish.</p>
             </div>
             <div class="panel">
               <ul class="feature-list">
-                <li>Specialising in fine line, delicate ornament, botanical and micro-detail tattoos.</li>
-                <li>Custom placements designed to complement the natural shape and movement of the body.</li>
-                <li>Ideal for first tattoos, meaningful keepsakes, and quietly luxurious statement pieces.</li>
+                <li>Artist from Ukraine with four years of professional tattoo experience.</li>
+                <li>Usually working in graphic and fine line styles with a clean, expressive feel.</li>
+                <li>Ideal for personal concepts, meaningful details, and elegant custom placement work.</li>
               </ul>
             </div>
           </div>
