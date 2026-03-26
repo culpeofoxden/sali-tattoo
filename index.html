@@ -425,9 +425,7 @@
       overflow: hidden;
       min-height: 220px;
       border-radius: 24px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(53, 41, 30, 0.28)),
-        var(--card-image, linear-gradient(135deg, #f0e6db, #d6c5b2));
+      background: var(--card-image, linear-gradient(135deg, #f0e6db, #d6c5b2));
       background-size: cover;
       background-position: center;
       box-shadow: 0 16px 32px rgba(79, 61, 39, 0.12);
@@ -447,8 +445,8 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(54, 39, 27, 0.62) 100%);
-      opacity: 0.9;
+      background: transparent;
+      opacity: 1;
       transition: opacity var(--transition);
     }
 
@@ -473,38 +471,6 @@
     .gallery-card:focus-visible::after {
       opacity: 1;
       transform: scale(1);
-    }
-
-    .gallery-meta {
-      position: absolute;
-      inset: auto 1.1rem 1rem 1.1rem;
-      z-index: 1;
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 1rem;
-      color: #fffaf5;
-    }
-
-    .gallery-meta strong {
-      display: block;
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .gallery-meta span,
-    .gallery-tag {
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .gallery-tag {
-      padding: 0.45rem 0.7rem;
-      border-radius: 999px;
-      background: rgba(255, 251, 245, 0.16);
-      backdrop-filter: blur(10px);
-      white-space: nowrap;
     }
 
     .steps {
@@ -793,53 +759,37 @@
             <p>A live portfolio edit featuring real pieces from Sa.li Tattoo. The gallery is now connected to local images in the <code>images</code> folder for easy updates as the portfolio grows.</p>
           </div>
           <div class="gallery-grid">
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(246, 234, 222, 0.18), rgba(197, 171, 143, 0.40)), url('images/gallery-01.jpg');">
-              <div class="gallery-meta"><div><strong>Watercolour Fairies</strong><span>Colour fantasy work</span></div><div class="gallery-tag">Featured</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-01.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(248, 238, 227, 0.18), rgba(188, 162, 130, 0.42)), url('images/gallery-02.jpg');">
-              <div class="gallery-meta"><div><strong>Spider Detail</strong><span>Graphic placement</span></div><div class="gallery-tag">Statement</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-02.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(252, 246, 239, 0.16), rgba(195, 171, 145, 0.40)), url('images/gallery-03.jpg');">
-              <div class="gallery-meta"><div><strong>Ornamental Cross</strong><span>Fine line symbol</span></div><div class="gallery-tag">Fine line</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-03.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(246, 234, 220, 0.18), rgba(166, 141, 111, 0.42)), url('images/gallery-04.jpg');">
-              <div class="gallery-meta"><div><strong>Fairy Placement</strong><span>Soft colour accent</span></div><div class="gallery-tag">Colour</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-04.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(255, 247, 240, 0.16), rgba(181, 156, 124, 0.44)), url('images/gallery-05.jpg');">
-              <div class="gallery-meta"><div><strong>Botanical Mini</strong><span>Delicate floral</span></div><div class="gallery-tag">Elegant</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-05.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(251, 241, 230, 0.16), rgba(168, 143, 114, 0.46)), url('images/gallery-06.jpg');">
-              <div class="gallery-meta"><div><strong>Mandala Shoulder</strong><span>Balanced geometry</span></div><div class="gallery-tag">Ornamental</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-06.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(245, 236, 226, 0.18), rgba(174, 149, 118, 0.44)), url('images/gallery-07.jpg');">
-              <div class="gallery-meta"><div><strong>Butterfly Backpiece</strong><span>Floral composition</span></div><div class="gallery-tag">Featured</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-07.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(246, 238, 230, 0.16), rgba(177, 151, 122, 0.42)), url('images/gallery-08.jpg');">
-              <div class="gallery-meta"><div><strong>Minimal Star</strong><span>Clean blackwork</span></div><div class="gallery-tag">Minimal</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-08.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(252, 242, 234, 0.18), rgba(183, 155, 124, 0.42)), url('images/gallery-09.jpg');">
-              <div class="gallery-meta"><div><strong>Butterfly Sternum</strong><span>Delicate symmetry</span></div><div class="gallery-tag">Fine line</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-09.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(247, 235, 224, 0.18), rgba(171, 145, 115, 0.44)), url('images/gallery-10.jpg');">
-              <div class="gallery-meta"><div><strong>Elephant Floral</strong><span>Illustrative linework</span></div><div class="gallery-tag">Custom</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-10.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(250, 242, 234, 0.18), rgba(178, 151, 120, 0.44)), url('images/gallery-11.jpg');">
-              <div class="gallery-meta"><div><strong>Figure Outline</strong><span>Minimal contour</span></div><div class="gallery-tag">Sketch</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-11.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(244, 235, 224, 0.18), rgba(171, 144, 112, 0.42)), url('images/gallery-12.jpg');">
-              <div class="gallery-meta"><div><strong>Butterfly Sleeve Accent</strong><span>Soft shading</span></div><div class="gallery-tag">Butterfly</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-12.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(249, 238, 228, 0.18), rgba(176, 149, 120, 0.44)), url('images/gallery-13.jpg');">
-              <div class="gallery-meta"><div><strong>Dragon Neck Piece</strong><span>Detailed blackwork</span></div><div class="gallery-tag">Bold</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-13.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(251, 241, 233, 0.18), rgba(177, 151, 121, 0.42)), url('images/gallery-14.jpg');">
-              <div class="gallery-meta"><div><strong>Pomegranate Script</strong><span>Red ink detail</span></div><div class="gallery-tag">Red ink</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-14.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(248, 236, 227, 0.18), rgba(172, 145, 115, 0.44)), url('images/gallery-15.jpg');">
-              <div class="gallery-meta"><div><strong>Koi Composition</strong><span>Flowing custom work</span></div><div class="gallery-tag">Custom</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-15.jpg');">
             </article>
-            <article class="gallery-card" style="--card-image: linear-gradient(135deg, rgba(250, 242, 233, 0.18), rgba(179, 152, 122, 0.42)), url('images/gallery-16.jpg');">
-              <div class="gallery-meta"><div><strong>Rose and Butterfly</strong><span>Graphic floral blend</span></div><div class="gallery-tag">Signature</div></div>
+            <article class="gallery-card" style="--card-image: url('images/gallery-16.jpg');">
             </article>
           </div>
         </div>
