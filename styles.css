@@ -120,17 +120,16 @@ section { padding:1.65rem 0 0; }
 .feature-list li { display:flex; gap:.75rem; align-items:flex-start; }
 .feature-list li::before { content:""; width:.7rem; height:.7rem; margin-top:.45rem; border-radius:50%; background:radial-gradient(circle, var(--accent), #ccdacf); box-shadow:0 0 0 7px rgba(127,160,138,.12); flex-shrink:0; }
 .gallery-grid {
-  columns: 1;
-  column-gap: .9rem;
+  column-count: 1;
+  column-gap: 20px;
 }
 .gallery-card {
   break-inside: avoid;
-  margin: 0 0 .9rem;
-  border-radius: 24px;
-  background: rgba(255,255,255,.58);
-  border: 1px solid rgba(127,160,138,.14);
-  box-shadow: 0 16px 32px rgba(73,95,80,.12);
-  overflow: hidden;
+  margin: 0 0 20px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
 }
 .sketch-carousel {
   display: grid;
@@ -142,9 +141,7 @@ section { padding:1.65rem 0 0; }
   gap: .7rem;
 }
 .sketch-track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(72%, 1fr);
+  display: flex;
   gap: 1rem;
   overflow-x: auto;
   padding-bottom: .35rem;
@@ -161,25 +158,24 @@ section { padding:1.65rem 0 0; }
 }
 .sketch-card {
   position: relative;
-  min-height: 0;
+  flex: 0 0 auto;
+  width: min(78vw, 400px);
   margin: 0;
-  border-radius: 24px;
-  overflow: hidden;
-  background: rgba(255,255,255,.68);
-  border: 1px solid rgba(127,160,138,.14);
-  box-shadow: 0 16px 32px rgba(73,95,80,.12);
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
   scroll-snap-align: start;
 }
 .category-card { background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(241,247,241,.18)), var(--card-image, linear-gradient(135deg, #edf4ee, #d9e6dc)); }
-.gallery-card::after, .sketch-card::after, .category-card::after {
+.category-card::after {
   content:""; position:absolute; inset:1rem; border-radius:18px; border:1px solid rgba(255,255,255,.28); opacity:0; transform:scale(.96); transition:opacity var(--transition), transform var(--transition);
 }
 .gallery-card:hover, .gallery-card:focus-within, .sketch-card:hover, .sketch-card:focus-within, .category-card:hover, .category-card:focus-visible {
   transform:translateY(-6px); box-shadow:0 24px 44px rgba(73,95,80,.16);
 }
-.gallery-card:hover::after, .gallery-card:focus-within::after, .sketch-card:hover::after, .sketch-card:focus-within::after, .category-card:hover::after, .category-card:focus-visible::after {
-  opacity:1; transform:scale(1);
-}
+.category-card:hover::after, .category-card:focus-visible::after { opacity:1; transform:scale(1); }
 .media-trigger {
   display: block;
   width: 100%;
@@ -197,7 +193,14 @@ section { padding:1.65rem 0 0; }
   width: 100%;
   height: auto;
   object-fit: contain;
-  background: rgba(255,255,255,.82);
+  display: block;
+  border-radius: 14px;
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(127,160,138,.12);
+  box-shadow: 0 16px 32px rgba(73,95,80,.12);
+}
+.gallery-card img {
+  border-radius: 16px;
 }
 .carousel-button {
   display: inline-flex;
@@ -306,8 +309,8 @@ section { padding:1.65rem 0 0; }
   .about-grid, .custom-grid, .contact-grid, .category-wrap { grid-template-columns:1.05fr .95fr; }
   .pricing-grid, .styles-grid, .testimonial-grid { grid-template-columns:repeat(2, 1fr); }
   .stats { grid-template-columns:repeat(3, 1fr); }
-  .gallery-grid { columns: 2; }
-  .sketch-track { grid-auto-columns: minmax(40%, 1fr); }
+  .gallery-grid { column-count: 2; }
+  .sketch-track { gap: 20px; }
   .category-gallery-grid { grid-template-columns:repeat(3, 1fr); }
 }
 @media (min-width: 960px) {
@@ -315,8 +318,11 @@ section { padding:1.65rem 0 0; }
   .section-shell, .category-copy, .category-gallery { padding:2rem; }
   .styles-grid { grid-template-columns:repeat(4, 1fr); }
   .testimonial-grid { grid-template-columns:repeat(3, 1fr); }
-  .gallery-grid { columns: 3; }
-  .sketch-track { grid-auto-columns: minmax(28%, 1fr); }
+  .gallery-grid { column-count: 3; }
+  .sketch-card { width: min(30vw, 400px); }
+}
+@media (max-width: 719px) {
+  .sketch-card { width: min(82vw, 400px); }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior:auto; }
