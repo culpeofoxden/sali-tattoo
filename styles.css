@@ -317,8 +317,6 @@ section { padding:1.65rem 0 0; }
   .gallery-grid { column-count: 2; }
   .sketch-track { gap: 20px; }
   .studio-row { grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); align-items:stretch; }
-  .studio-row-reverse > :first-child { order:1; }
-  .studio-row-reverse > :last-child { order:2; }
   .category-gallery-grid { grid-template-columns:repeat(3, 1fr); }
 }
 @media (min-width: 960px) {
