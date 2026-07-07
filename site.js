@@ -50,18 +50,19 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-const sketchTrack = document.querySelector("[data-sketch-track]");
-const prevButton = document.querySelector("[data-carousel-prev]");
-const nextButton = document.querySelector("[data-carousel-next]");
+document.querySelectorAll("[data-carousel]").forEach((carousel) => {
+  const track = carousel.querySelector("[data-carousel-track]");
+  const prevButton = carousel.querySelector("[data-carousel-prev]");
+  const nextButton = carousel.querySelector("[data-carousel-next]");
+  if (!track || !prevButton || !nextButton) return;
 
-if (sketchTrack && prevButton && nextButton) {
-  const scrollAmount = () => Math.min(sketchTrack.clientWidth * 0.9, 420);
+  const scrollAmount = () => Math.min(track.clientWidth * 0.9, 420);
 
   prevButton.addEventListener("click", () => {
-    sketchTrack.scrollBy({ left: -scrollAmount(), behavior: "smooth" });
+    track.scrollBy({ left: -scrollAmount(), behavior: "smooth" });
   });
 
   nextButton.addEventListener("click", () => {
-    sketchTrack.scrollBy({ left: scrollAmount(), behavior: "smooth" });
+    track.scrollBy({ left: scrollAmount(), behavior: "smooth" });
   });
-}
+});
