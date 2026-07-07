@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 660" fill="none">
+  <g stroke="#1c1712" stroke-width="1.4" stroke-linecap="round" opacity="0.58">
+    <!-- stem -->
+    <path d="M255 640 C247 560 240 480 248 400 C253 352 258 306 251 252"/>
+    <!-- petals, recurved -->
+    <path d="M251 250 C242 210 236 170 246 136 C248 128 254 126 257 133 C264 168 260 210 254 248" stroke-width="1.2"/>
+    <path d="M249 249 C220 222 196 192 188 156 C186 147 192 142 199 147 C226 170 244 208 252 246" stroke-width="1.2"/>
+    <path d="M247 250 C214 240 180 224 158 196 C153 189 158 182 166 185 C196 198 226 224 249 246" stroke-width="1.2"/>
+    <path d="M253 248 C276 214 300 188 330 172 C338 168 344 174 339 181 C316 204 288 230 258 250" stroke-width="1.2"/>
+    <path d="M255 251 C288 244 320 244 346 258 C352 262 351 269 344 269 C314 266 284 262 257 256" stroke-width="1.2"/>
+    <!-- long stamens -->
+    <path d="M252 246 C246 180 252 116 282 64" stroke-width="1.1"/>
+    <path d="M252 246 C230 190 214 130 220 76" stroke-width="1.1"/>
+    <path d="M253 247 C282 196 318 152 368 124" stroke-width="1.1"/>
+    <path d="M251 247 C210 214 176 176 158 128" stroke-width="1.1"/>
+    <path d="M254 249 C296 232 338 220 384 218" stroke-width="1.1"/>
+    <path d="M250 248 C262 190 288 138 330 96" stroke-width="1.1"/>
+    <!-- bud on a side shoot -->
+    <path d="M251 300 C270 288 288 274 298 254"/>
+    <path d="M298 254 C294 240 300 228 310 224 C318 236 314 250 302 256" stroke-width="1.2"/>
+    <!-- leaf near the base -->
+    <path d="M248 520 C210 508 178 500 150 506"/>
+    <path d="M150 506 C180 516 214 524 247 528"/>
+    <path d="M160 508 C190 514 220 519 246 524" stroke-width="1"/>
+  </g>
+  <g fill="#1c1712" opacity="0.58">
+    <circle cx="284" cy="61" r="2.4"/>
+    <circle cx="221" cy="73" r="2.4"/>
+    <circle cx="371" cy="122" r="2.4"/>
+    <circle cx="156" cy="125" r="2.4"/>
+    <circle cx="388" cy="218" r="2.4"/>
+    <circle cx="333" cy="93" r="2.4"/>
+    <circle cx="200" cy="120" r="1.6"/>
+    <circle cx="360" cy="180" r="1.8"/>
+    <circle cx="150" cy="170" r="1.5"/>
+    <circle cx="270" cy="90" r="1.5"/>
+    <circle cx="230" cy="300" r="1.5"/>
+  </g>
+  <g fill="#e2841a" opacity="0.75">
+    <circle cx="330" cy="150" r="3"/>
+    <circle cx="196" cy="94" r="2.2"/>
+  </g>
+</svg>

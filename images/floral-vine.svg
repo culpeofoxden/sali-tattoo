@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 420" fill="none">
+  <g stroke="#1c1712" stroke-width="1.3" stroke-linecap="round" opacity="0.5">
+    <!-- main vine flowing out of the top-right corner -->
+    <path d="M416 10 C340 26 268 62 218 124 C186 164 170 212 166 260"/>
+    <path d="M334 40 C316 74 308 110 314 146"/>
+    <!-- leaves -->
+    <path d="M252 96 C234 90 218 98 212 114"/>
+    <path d="M212 114 C228 118 246 110 253 97"/>
+    <path d="M296 62 C282 54 266 56 256 68"/>
+    <path d="M256 68 C268 76 284 74 297 63"/>
+    <path d="M184 190 C168 186 154 194 148 210"/>
+    <path d="M148 210 C164 214 180 206 185 192"/>
+    <!-- tendril spiral -->
+    <path d="M314 146 C316 166 308 182 292 186 C280 188 274 178 282 170 C288 164 294 170 291 176" stroke-width="1.1"/>
+  </g>
+  <g fill="#1c1712" opacity="0.5">
+    <circle cx="166" cy="266" r="2.2"/>
+    <circle cx="230" cy="150" r="1.6"/>
+    <circle cx="352" cy="72" r="1.6"/>
+  </g>
+  <g fill="#e2841a" opacity="0.7">
+    <circle cx="300" cy="100" r="2.6"/>
+    <circle cx="196" cy="230" r="2"/>
+  </g>
+</svg>
