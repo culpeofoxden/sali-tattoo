@@ -1,3 +1,20 @@
+const header = document.querySelector(".site-header");
+const navToggle = document.querySelector("[data-nav-toggle]");
+
+if (header && navToggle) {
+  navToggle.addEventListener("click", () => {
+    const open = header.classList.toggle("menu-open");
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
+  header.querySelectorAll(".nav-links a").forEach((link) => {
+    link.addEventListener("click", () => {
+      header.classList.remove("menu-open");
+      navToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+}
+
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {

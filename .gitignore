@@ -1,0 +1,4 @@
+# Local working files that must not be published to GitHub Pages
+.claude/
+brandbook-concepts/
+IMG_*.JPG
