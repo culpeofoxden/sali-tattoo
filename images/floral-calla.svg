@@ -1,33 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 660" fill="none">
-  <g stroke="#1c1712" stroke-width="1.4" stroke-linecap="round" opacity="0.55">
+  <g stroke="#1c1712" stroke-width="1.3" stroke-linecap="round" opacity="0.55">
     <!-- stem -->
-    <path d="M170 645 C164 540 160 430 172 330 C179 288 184 262 185 245"/>
-    <!-- spathe: left edge up and over the crest towards the tip -->
-    <path d="M185 245 C140 214 118 164 130 118 C138 88 160 66 190 62 C216 59 238 74 248 94 C252 100 254 106 252 112" stroke-width="1.3"/>
-    <!-- curled point of the spathe -->
-    <path d="M252 112 C257 117 256 124 250 123" stroke-width="1"/>
-    <!-- front edge of the open funnel back down to the base -->
-    <path d="M252 112 C230 158 208 202 185 245" stroke-width="1.3"/>
-    <!-- rim of the opening, meeting the tip -->
-    <path d="M137 122 C166 142 216 136 250 112" stroke-width="1.1"/>
-    <!-- interior vein following the wrap -->
-    <path d="M178 232 C160 200 152 166 156 136" stroke-width="1"/>
-    <!-- spadix rising out of the mouth -->
-    <path d="M175 195 C183 166 191 140 199 118" stroke-width="1.2"/>
-    <!-- leaf -->
-    <path d="M168 520 C136 496 118 470 116 440 C142 456 162 484 172 512"/>
+    <path d="M170 645 C163 540 158 430 170 330 C176 292 176 262 175 235" stroke-width="1.4"/>
+    <!-- five open petals around the centre -->
+    <path d="M174 149 C160 132 158 100 185 80 C212 100 210 132 196 149"/>
+    <path d="M165 168 C134 168 112 150 108 129 C122 114 150 128 175 148"/>
+    <path d="M178 184 C162 212 136 224 115 214 C110 194 130 176 165 165"/>
+    <path d="M205 165 C240 176 260 194 255 214 C234 224 208 212 192 184"/>
+    <path d="M195 148 C224 118 250 114 262 129 C268 152 240 168 205 168"/>
+    <!-- petal veins -->
+    <path d="M185 150 C184 130 184 112 185 98" stroke-width="0.9"/>
+    <path d="M208 158 C226 146 240 138 250 133" stroke-width="0.9"/>
+    <path d="M172 178 C156 194 142 204 128 210" stroke-width="0.9"/>
+    <!-- stamens -->
+    <path d="M185 165 C186 158 187 151 188 145" stroke-width="1"/>
+    <path d="M185 165 C191 162 197 158 202 155" stroke-width="1"/>
+    <path d="M185 165 C180 161 175 156 170 152" stroke-width="1"/>
+    <path d="M185 165 C179 168 173 171 168 175" stroke-width="1"/>
+    <path d="M185 165 C188 171 192 177 195 182" stroke-width="1"/>
+    <!-- bud on a side shoot -->
+    <path d="M172 300 C196 286 214 268 222 246"/>
+    <path d="M222 246 C216 234 220 220 230 214 C238 224 236 240 226 248" stroke-width="1.2"/>
+    <!-- leaves -->
+    <path d="M168 520 C136 496 118 470 116 440 C142 456 162 484 172 512" stroke-width="1.4"/>
     <path d="M124 446 C142 468 158 492 169 514" stroke-width="1"/>
+    <path d="M173 400 C198 390 216 374 224 352 C200 358 182 376 172 396" stroke-width="1.4"/>
+    <path d="M177 393 C196 382 210 368 220 356" stroke-width="1"/>
   </g>
   <g fill="#1c1712" opacity="0.55">
-    <circle cx="200" cy="114" r="2.4"/>
-    <circle cx="195" cy="128" r="1.3"/>
-    <circle cx="190" cy="142" r="1.1"/>
-    <circle cx="120" cy="200" r="1.6"/>
-    <circle cx="262" cy="150" r="1.5"/>
-    <circle cx="150" cy="80" r="1.5"/>
+    <circle cx="188" cy="145" r="1.5"/>
+    <circle cx="202" cy="155" r="1.5"/>
+    <circle cx="170" cy="152" r="1.5"/>
+    <circle cx="168" cy="175" r="1.5"/>
+    <circle cx="195" cy="182" r="1.5"/>
+    <circle cx="262" cy="95" r="1.6"/>
+    <circle cx="108" cy="100" r="1.5"/>
+    <circle cx="280" cy="180" r="1.5"/>
+    <circle cx="140" cy="240" r="1.4"/>
   </g>
   <g fill="#e2841a" opacity="0.7">
-    <circle cx="262" cy="132" r="2.6"/>
-    <circle cx="132" cy="300" r="2"/>
+    <circle cx="250" cy="100" r="2.6"/>
+    <circle cx="128" cy="290" r="2"/>
   </g>
 </svg>
