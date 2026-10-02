@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://*.workers.dev blob: data:; connect-src 'self' https://*.workers.dev; form-action 'none'; base-uri 'none'"
+    />
+    <title>Artwork studio | Sa.li Tattoo</title>
+    <link rel="icon" href="../images/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Jost:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="admin.css" />
+    <script src="../photo-api-config.js" defer></script>
+    <script src="admin.js" defer></script>
+  </head>
+  <body>
+    <header class="admin-header">
+      <a class="brand" href="../index.html" aria-label="Sa.li Tattoo home">
+        <span>Sa.Li</span><small>Artwork studio</small>
+      </a>
+      <a class="back-link" href="../index.html">View website ↗</a>
+    </header>
+
+    <main>
+      <div class="intro">
+        <p class="eyebrow">Private publishing workspace</p>
+        <h1>Make space for <em>new work.</em></h1>
+        <p>
+          Add a finished tattoo to the portfolio or an original drawing to a
+          design collection. Enter the studio password to publish photos.
+        </p>
+      </div>
+
+      <section class="panel" aria-labelledby="access-title">
+        <div class="panel-heading">
+          <div>
+            <p class="step">01 / Sign in</p>
+            <h2 id="access-title">Studio password</h2>
+          </div>
+          <span class="connection" id="connection-state">Signed out</span>
+        </div>
+        <p class="muted">
+          Use your studio password to add or remove photographs. Your password
+          stays in this browser tab and is cleared when you sign out.
+        </p>
+        <form id="connect-form" class="connect-form">
+          <label for="password">Password</label>
+          <div class="input-row">
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter studio password"
+              autocomplete="current-password"
+              spellcheck="false"
+              required
+            />
+            <button type="submit" class="button">Sign in</button>
+          </div>
+        </form>
+        <button id="disconnect" class="text-button" type="button" hidden>
+          Sign out
+        </button>
+      </section>
+
+      <section class="panel" id="upload-panel" aria-labelledby="upload-title" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="step">02 / Upload</p>
+            <h2 id="upload-title">Add one photograph</h2>
+          </div>
+          <span class="muted">JPEG, PNG or WebP · up to 8 MB</span>
+        </div>
+        <form id="upload-form" class="upload-layout">
+          <div class="fields">
+            <label for="kind">Where should it appear?</label>
+            <select id="kind" required>
+              <option value="tattoo">Finished tattoo · main gallery</option>
+              <option value="design">Original drawing · design page</option>
+            </select>
+
+            <label for="category">Collection</label>
+            <select id="category" required></select>
+
+            <label for="photo">Photograph</label>
+            <input
+              id="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+            />
+
+            <label for="title">Internal title</label>
+            <input
+              id="title"
+              type="text"
+              maxlength="80"
+              placeholder="e.g. Lily on the shoulder"
+              required
+            />
+            <p class="field-note">Tattoo titles do not appear on the gallery tiles.</p>
+
+            <label for="alt">Image description</label>
+            <textarea
+              id="alt"
+              rows="3"
+              maxlength="180"
+              placeholder="Describe the subject, placement and visible details"
+              required
+            ></textarea>
+            <p class="field-note">This helps visitors using screen readers.</p>
+
+            <button class="button publish-button" type="submit">
+              Publish photograph <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+          <div class="preview" id="preview">
+            <span>Preview appears here</span>
+            <img id="preview-image" alt="Selected upload preview" hidden />
+          </div>
+        </form>
+      </section>
+
+      <section class="panel" id="library-panel" aria-labelledby="library-title" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="step">03 / Library</p>
+            <h2 id="library-title">Photos added here</h2>
+          </div>
+          <span class="muted" id="photo-count"></span>
+        </div>
+        <div id="library-list" class="library-list"></div>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <noscript>This publishing page needs JavaScript enabled.</noscript>
+    </main>
+  </body>
+</html>
