@@ -163,7 +163,7 @@ async function handle(request, env) {
       id, kind, category, title: title.trim(), alt: alt.trim(), sha256,
       type, addedAt: new Date().toISOString(),
     };
-    await env.GALLERY.put(`photo:${id}`, bytes, { metadata: item });
+    await env.GALLERY.put(`photo:${id}`, bytes.buffer, { metadata: item });
     return json({ item: { ...item, path: `${url.origin}/photos/${id}/image` } }, 201);
   }
   const deleteMatch = /^\/photos\/([a-f0-9-]{36})$/.exec(path);

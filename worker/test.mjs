@@ -24,7 +24,8 @@ function environment() {
       return options?.type === "arrayBuffer" ? entry.bytes.buffer.slice(0) : entry.bytes;
     },
     async put(key, bytes, options) {
-      values.set(key, { bytes, metadata: options.metadata });
+      assert.ok(bytes instanceof ArrayBuffer);
+      values.set(key, { bytes: new Uint8Array(bytes), metadata: options.metadata });
     },
     async delete(key) { values.delete(key); },
   };
