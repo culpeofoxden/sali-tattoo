@@ -108,6 +108,19 @@ textarea { resize: vertical; }
   overflow: hidden;
 }
 .preview img { width: 100%; max-height: 460px; object-fit: contain; }
+.library-note { margin: 0 0 30px; }
+.library-group + .library-group { margin-top: 36px; padding-top: 30px; border-top: 1px solid var(--line); }
+.library-group-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.library-group-heading h3 { margin: 0; font-size: 23px; font-weight: 400; letter-spacing: -.035em; }
+.library-group-heading .muted { font-size: 13px; }
+.existing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 14px; }
+.existing-card { display: block; min-width: 0; border: 1px solid var(--line); background: #fff; }
+.existing-card:hover { border-color: #a56b24; }
+.existing-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #e9dfd2; }
+.existing-card-info { display: block; padding: 10px 11px 12px; }
+.existing-card-info strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
+.existing-card-info small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+#existing-warning { margin-bottom: 0; font-size: 13px; }
 .library-list { display: grid; gap: 10px; }
 .library-item { display: flex; align-items: center; gap: 16px; padding: 10px; border: 1px solid var(--line); }
 .library-item img { width: 72px; height: 72px; object-fit: cover; background: white; }
@@ -129,5 +142,6 @@ textarea { resize: vertical; }
   .admin-header { padding-inline: 16px; }
   .back-link { font-size: 9px; }
   .input-row { flex-direction: column; }
+  .existing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .library-item img { width: 55px; height: 55px; }
 }

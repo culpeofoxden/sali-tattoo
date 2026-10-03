@@ -131,11 +131,29 @@
         <div class="panel-heading">
           <div>
             <p class="step">03 / Library</p>
-            <h2 id="library-title">Photos added here</h2>
+            <h2 id="library-title">Website photos</h2>
           </div>
           <span class="muted" id="photo-count"></span>
         </div>
-        <div id="library-list" class="library-list"></div>
+        <p class="muted library-note">
+          See the artwork already published on the website. Photos added through
+          this page can also be removed here.
+        </p>
+        <div class="library-group">
+          <div class="library-group-heading">
+            <h3>Already on the website</h3>
+            <span class="muted" id="existing-count"></span>
+          </div>
+          <div id="existing-list" class="existing-grid"></div>
+          <p class="muted" id="existing-warning" hidden></p>
+        </div>
+        <div class="library-group">
+          <div class="library-group-heading">
+            <h3>Added through this page</h3>
+            <span class="muted" id="added-count"></span>
+          </div>
+          <div id="library-list" class="library-list"></div>
+        </div>
       </section>
 
       <p id="status" class="status" role="status" aria-live="polite"></p>

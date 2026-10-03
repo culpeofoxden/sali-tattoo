@@ -12,9 +12,19 @@ const fileInput = document.querySelector("#photo");
 const previewImage = document.querySelector("#preview-image");
 const previewPlaceholder = document.querySelector("#preview span");
 const libraryList = document.querySelector("#library-list");
+const existingList = document.querySelector("#existing-list");
 const statusLine = document.querySelector("#status");
+const EXISTING_PAGES = [
+  { path: "../index.html", cards: ".work-grid .work-card", cover: ".hero-main-image img", coverTitle: "Homepage cover", label: "Tattoo" },
+  { path: "../animals.html", cards: ".category-gallery-grid .work-card", cover: ".category-hero-media img", coverTitle: "Animals cover", label: "Animals · sketch" },
+  { path: "../plants.html", cards: ".category-gallery-grid .work-card", cover: ".category-hero-media img", coverTitle: "Plants cover", label: "Plants · sketch" },
+  { path: "../other.html", cards: ".category-gallery-grid .work-card", cover: ".category-hero-media img", coverTitle: "Other cover", label: "Other · sketch" },
+];
 let password = "";
 let catalog = { items: [] };
+let existingPhotos = [];
+let existingLoadState = "loading";
+let existingLoadId = 0;
 let knownHashes = new Set();
 let previewUrl = null;
 
@@ -74,6 +84,37 @@ async function loadKnownHashes() {
   } catch { /* Server checks previously uploaded photos too. */ }
 }
 loadKnownHashes();
+function existingPhoto(image, pageUrl, title, label) {
+  const source = image?.getAttribute("src");
+  if (!source) return null;
+  const url = new URL(source, pageUrl);
+  if (url.origin !== location.origin || !/\.(jpe?g|png|webp)$/i.test(url.pathname)) return null;
+  return { path: url.href, title: title || image.alt || "Artwork", label };
+}
+async function loadExistingPhotos(loadId) {
+  const results = await Promise.allSettled(EXISTING_PAGES.map(async (page) => {
+    const pageUrl = new URL(page.path, document.baseURI);
+    const response = await fetch(pageUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Could not load ${pageUrl.pathname}`);
+    const documentOnSite = new DOMParser().parseFromString(await response.text(), "text/html");
+    const cards = [...documentOnSite.querySelectorAll(page.cards)]
+      .map((card) => existingPhoto(card.querySelector("img"), pageUrl, card.dataset.title, card.dataset.kind || page.label))
+      .filter(Boolean);
+    const cover = existingPhoto(documentOnSite.querySelector(page.cover), pageUrl, page.coverTitle, page.label);
+    return cover ? [...cards, cover] : cards;
+  }));
+  if (loadId !== existingLoadId) return;
+  const unique = new Map();
+  for (const result of results) {
+    if (result.status !== "fulfilled") continue;
+    for (const photo of result.value) {
+      if (!unique.has(photo.path)) unique.set(photo.path, photo);
+    }
+  }
+  existingPhotos = [...unique.values()];
+  existingLoadState = results.some((result) => result.status === "rejected") ? "partial" : "loaded";
+  renderLibrary();
+}
 connectForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   password = document.querySelector("#password").value;
@@ -83,9 +124,12 @@ connectForm.addEventListener("submit", async (event) => {
     await api("/login", { method: "POST", body: { password } });
     document.querySelector("#password").value = "";
     catalog = await api("/gallery");
+    existingPhotos = [];
+    existingLoadState = "loading";
     showConnected(true);
     renderLibrary();
     setStatus("Signed in. Choose a photograph to publish.");
+    loadExistingPhotos(++existingLoadId);
   } catch (error) {
     password = "";
     setStatus(error.message, true);
@@ -94,8 +138,11 @@ connectForm.addEventListener("submit", async (event) => {
 document.querySelector("#disconnect").addEventListener("click", () => {
   password = "";
   catalog = { items: [] };
+  existingPhotos = [];
+  existingLoadId++;
   showConnected(false);
   libraryList.replaceChildren();
+  existingList.replaceChildren();
   setStatus("Signed out. The password has been cleared from this tab.");
 });
 fileInput.addEventListener("change", () => {
@@ -154,10 +201,51 @@ uploadForm.addEventListener("submit", async (event) => {
   } finally { setBusy(uploadForm, false); }
 });
 function renderLibrary() {
+  existingList.replaceChildren();
+  const existingWarning = document.querySelector("#existing-warning");
+  existingWarning.hidden = true;
+  if (existingLoadState === "loading") {
+    const loading = document.createElement("p");
+    loading.className = "muted";
+    loading.textContent = "Loading photographs already on the website…";
+    existingList.append(loading);
+  } else {
+    for (const photo of existingPhotos) {
+      const link = document.createElement("a");
+      link.className = "existing-card";
+      link.href = photo.path;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.setAttribute("aria-label", `View ${photo.title} at full size`);
+      const image = document.createElement("img");
+      image.src = photo.path;
+      image.alt = photo.title;
+      image.loading = "lazy";
+      const info = document.createElement("span");
+      info.className = "existing-card-info";
+      const title = document.createElement("strong");
+      title.textContent = photo.title;
+      const label = document.createElement("small");
+      label.textContent = photo.label;
+      info.append(title, label);
+      link.append(image, info);
+      existingList.append(link);
+    }
+    if (existingLoadState === "partial") {
+      existingWarning.hidden = false;
+      existingWarning.textContent = "Some website pages could not be checked. Refresh this page to try again.";
+    } else if (!existingPhotos.length) {
+      existingWarning.hidden = false;
+      existingWarning.textContent = "No existing portfolio photographs were found.";
+    }
+  }
+  document.querySelector("#existing-count").textContent = existingLoadState === "loading" ? "Loading…" : `${existingPhotos.length} photos`;
   libraryList.replaceChildren();
   const items = [...catalog.items].reverse();
-  document.querySelector("#photo-count").textContent =
-    `${items.length} added photograph${items.length === 1 ? "" : "s"}`;
+  document.querySelector("#added-count").textContent = `${items.length} photos`;
+  document.querySelector("#photo-count").textContent = existingLoadState === "loading"
+    ? `${items.length} added`
+    : `${existingPhotos.length + items.length} total`;
   if (!items.length) {
     const empty = document.createElement("p");
     empty.className = "muted";
