@@ -59,7 +59,7 @@
       href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Jost:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20261015-4" />
+    <link rel="stylesheet" href="styles.css?v=20261015-5" />
     <script src="photo-api-config.js" defer></script>
     <script src="site.js?v=20261015-4" defer></script>
   </head>
@@ -192,52 +192,51 @@
               see the detail.
             </p>
           </div>
-          <div
-            class="filter-list"
-            role="group"
-            aria-label="Filter tattoo portfolio"
-          >
-            <button
-              class="filter-button is-active"
-              type="button"
-              data-filter="all"
-              aria-pressed="true"
+          <div class="work-controls">
+            <div
+              class="filter-list"
+              role="group"
+              aria-label="Filter tattoo portfolio"
             >
-              All work
-            </button>
-            <button
-              class="filter-button"
-              type="button"
-              data-filter="botanical"
-              aria-pressed="false"
+              <button
+                class="filter-button is-active"
+                type="button"
+                data-filter="all"
+                aria-pressed="true"
+              >
+                All work
+              </button>
+              <button
+                class="filter-button"
+                type="button"
+                data-filter="botanical"
+                aria-pressed="false"
+              >
+                Botanical
+              </button>
+              <button
+                class="filter-button"
+                type="button"
+                data-filter="creatures"
+                aria-pressed="false"
+              >
+                Creatures
+              </button>
+              <button
+                class="filter-button"
+                type="button"
+                data-filter="concepts"
+                aria-pressed="false"
+              >
+                Conceptual
+              </button>
+            </div>
+            <a class="text-link work-design-link" href="#styles"
+              >Explore the designs <span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="images/icons.svg#arrow-up-right"></use></svg></span></a
             >
-              Botanical
-            </button>
-            <button
-              class="filter-button"
-              type="button"
-              data-filter="creatures"
-              aria-pressed="false"
-            >
-              Creatures
-            </button>
-            <button
-              class="filter-button"
-              type="button"
-              data-filter="concepts"
-              aria-pressed="false"
-            >
-              Conceptual
-            </button>
           </div>
           <div class="work-grid">
             <p class="gallery-empty">Loading gallery…</p>
-          </div>
-          <div class="work-bottom" data-reveal>
-            <p>Every detail has a place. Every piece has a story.</p>
-            <a class="text-link" href="#styles"
-              >Explore the designs <span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="images/icons.svg#arrow-up-right"></use></svg></span></a
-            >
           </div>
         </div>
       </section>
@@ -362,9 +361,6 @@
               and make something worth carrying.
             </p>
             <div class="about-signature">Vita <span>Sa.li Tattoo</span></div>
-            <a class="text-link" href="#process"
-              >How we make it yours <span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="images/icons.svg#arrow-up-right"></use></svg></span></a
-            >
           </div>
         </div>
       </section>

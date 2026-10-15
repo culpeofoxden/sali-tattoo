@@ -16,9 +16,9 @@
       href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Jost:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="admin.css?v=20261015-5" />
     <script src="../photo-api-config.js" defer></script>
-    <script src="admin.js?v=20261015-4" defer></script>
+    <script src="admin.js?v=20261015-5" defer></script>
   </head>
   <body>
     <header class="admin-header">
@@ -77,6 +77,7 @@
           </div>
           <span class="muted">JPEG, PNG or WebP · up to 8 MB</span>
         </div>
+        <p id="upload-feedback" class="upload-feedback" role="status" aria-live="polite"></p>
         <div id="replace-message" class="replace-message" hidden>
           <span id="replace-description"></span>
           <button id="cancel-replace" class="text-button" type="button">Cancel replacement</button>

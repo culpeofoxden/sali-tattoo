@@ -136,6 +136,9 @@ textarea { resize: vertical; }
 .card-edit textarea { min-height: 72px; }
 .status { min-height: 24px; margin: 24px 0 0; color: #326047; font-weight: 500; }
 .status.error { color: #a23824; }
+.upload-feedback { margin: 0 0 20px; color: #326047; font-weight: 500; }
+.upload-feedback:empty { display: none; }
+.upload-feedback.error { color: #a23824; }
 @media (max-width: 760px) {
   main { padding-top: 48px; }
   .upload-layout { grid-template-columns: 1fr; }

@@ -302,8 +302,6 @@ async function handle(request, env) {
   }
 
   if (method === "POST" && path === "/photos") {
-    if (!(await rateLimit(env.UPLOAD_LIMIT, `upload:${ip}`)))
-      return error("Please wait before adding another photograph.", 429);
     if (Number(request.headers.get("Content-Length")) > MAX_REQUEST_BYTES)
       return error("This file is over 8 MB.", 413);
     let form;
@@ -344,6 +342,8 @@ async function handle(request, env) {
     const destinationCategory = replacing ? replacing.category : category;
     if (duplicateInDestination(catalog, sha256, destinationKind, destinationCategory, replaceId))
       return error("This image is already in this collection.", 409);
+    if (!(await rateLimit(env.UPLOAD_LIMIT, `upload:${ip}`)))
+      return error("Too many photographs were added recently. Wait a minute and retry.", 429);
     const imageId = crypto.randomUUID();
     const imagePath = `${url.origin}/photos/${imageId}/image`;
     const item = replacing ? {

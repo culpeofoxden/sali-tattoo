@@ -25,6 +25,15 @@ function status(message, error = false) {
   $("#status").textContent = message;
   $("#status").classList.toggle("error", error);
 }
+function uploadStatus(message, error = false) {
+  if ($("#upload-panel").hidden) {
+    status(message, error);
+    return;
+  }
+  status("");
+  $("#upload-feedback").textContent = message;
+  $("#upload-feedback").classList.toggle("error", error);
+}
 function busy(form, value) {
   form.querySelectorAll("button, input, select, textarea").forEach((field) => { field.disabled = value; });
   form.setAttribute("aria-busy", String(value));
@@ -91,6 +100,7 @@ $("#disconnect").addEventListener("click", () => {
   status("Signed out. The password has been cleared from this tab.");
 });
 fileInput.addEventListener("change", () => {
+  uploadStatus("");
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   const file = fileInput.files[0];
   $("#preview-image").hidden = !file;
@@ -110,6 +120,7 @@ function resetReplacement() {
   fileInput.dispatchEvent(new Event("change"));
 }
 function replace(item) {
+  uploadStatus("");
   fileInput.value = "";
   fileInput.dispatchEvent(new Event("change"));
   replacementId = item.id;
@@ -128,18 +139,18 @@ uploadForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const file = fileInput.files[0];
   if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    status("Choose a JPEG, PNG or WebP image.", true); return;
+    uploadStatus("Choose a JPEG, PNG or WebP image.", true); return;
   }
-  if (file.size > MAX_BYTES) { status("This file is over 8 MB. Export a smaller copy first.", true); return; }
+  if (file.size > MAX_BYTES) { uploadStatus("This file is over 8 MB. Export a smaller copy first.", true); return; }
   const description = $("#alt").value.trim();
   if (description.length < 8 || !/[\p{L}]{3,}/u.test(description)) {
-    status("Describe what is shown in the image (at least 8 characters).", true); return;
+    uploadStatus("Describe what is shown in the image (at least 8 characters).", true); return;
   }
   if (!replacementId && !CATEGORIES[kindInput.value]?.some(([value]) => value === categoryInput.value)) {
-    status("Choose a valid collection.", true); return;
+    uploadStatus("Choose a valid collection.", true); return;
   }
   busy(uploadForm, true);
-  status("Uploading image…");
+  uploadStatus("Uploading image…");
   try {
     const form = new FormData();
     form.set("photo", file);
@@ -151,9 +162,9 @@ uploadForm.addEventListener("submit", async (event) => {
     catalog = await api("/admin/catalog");
     resetReplacement();
     renderCatalog();
-    status("Saved. The website will update shortly.");
+    uploadStatus("Saved. The website will update shortly.");
   } catch (error) {
-    status(`Could not save: ${error.message}`, true);
+    uploadStatus(`Could not save: ${error.message}`, true);
   } finally { busy(uploadForm, false); }
 });
 function element(tag, className, content) {

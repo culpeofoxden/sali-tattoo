@@ -124,6 +124,32 @@ test("password access, upload, duplicate rejection, and deletion", async (t) => 
   assert.equal((await restored.json()).item.status, "active");
 });
 
+test("finished tattoo uploads work in every category and invalid attempts do not use the upload limit", async () => {
+  const env = environment();
+  let counted = 0;
+  env.UPLOAD_LIMIT = { async limit() { counted++; return { success: true }; } };
+  for (const category of ["botanical", "creatures", "concepts"]) {
+    const response = await api.fetch(request("/photos", "POST", {
+      body: photoForm({ kind: "tattoo", category }), password: PASSWORD,
+    }), env);
+    assert.equal(response.status, 201, `${category} should accept a new photo`);
+    assert.equal((await response.json()).item.category, category);
+  }
+  assert.equal(counted, 3);
+  const duplicate = await api.fetch(request("/photos", "POST", {
+    body: photoForm({ kind: "tattoo", category: "concepts" }), password: PASSWORD,
+  }), env);
+  assert.equal(duplicate.status, 409);
+  const invalid = await api.fetch(request("/photos", "POST", {
+    body: photoForm({ bytes: PNG.slice(0, 8), kind: "tattoo", category: "concepts" }), password: PASSWORD,
+  }), env);
+  assert.equal(invalid.status, 400);
+  assert.equal(counted, 3);
+  const publicCatalog = await api.fetch(request("/catalog"), env);
+  const tattoo = (await publicCatalog.json()).items.filter((item) => item.kind === "tattoo" && item.sha256);
+  assert.deepEqual(tattoo.map((item) => item.category), ["botanical", "creatures", "concepts"]);
+});
+
 test("restoring and moving cannot create duplicates, but reuse in another collection works", async () => {
   const env = environment();
   const upload = (category) => api.fetch(request("/photos", "POST", {
