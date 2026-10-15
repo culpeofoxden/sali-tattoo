@@ -1,4 +1,5 @@
 const SITE_ORIGIN = "https://sali.tattoo";
+const CATALOG_KEY = "catalog:v2";
 const MAX_BYTES = 8 * 1024 * 1024;
 const MAX_REQUEST_BYTES = MAX_BYTES + 32 * 1024;
 const CATEGORIES = {
@@ -28,7 +29,7 @@ function cors(request, response) {
   if (request.headers.get("Origin") !== SITE_ORIGIN) return response;
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Origin", SITE_ORIGIN);
-  headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type, X-Admin-Password");
   headers.set("Vary", "Origin");
   return new Response(response.body, { status: response.status, headers });
@@ -63,7 +64,7 @@ async function allItems(store, origin) {
     const page = await store.list({ prefix: "photo:", limit: 1000, ...(cursor ? { cursor } : {}) });
     for (const entry of page.keys) {
       const item = entry.metadata;
-      if (item?.id && item?.kind && item?.category)
+      if (item?.id === entry.name.slice("photo:".length) && item.kind && item.category)
         items.push({ ...item, path: `${origin}/photos/${item.id}/image` });
     }
     cursor = page.list_complete ? undefined : page.cursor;
@@ -85,6 +86,43 @@ async function isPublishedPhoto(sha256) {
   return catalog.known?.some((item) => item.sha256 === sha256) === true;
 }
 
+async function readCatalog(env, origin) {
+  const saved = await env.GALLERY.get(CATALOG_KEY, { type: "json" });
+  if (saved?.version === 2 && Array.isArray(saved.items)) return saved;
+  const response = await fetch(`${SITE_ORIGIN}/portfolio-catalog.json`, { cache: "no-store" });
+  if (!response.ok) throw new Error("The original portfolio catalog is unavailable.");
+  const base = await response.json();
+  if (base.version !== 2 || !Array.isArray(base.items)) throw new Error("Invalid portfolio catalog.");
+  const legacy = await allItems(env.GALLERY, origin);
+  const knownIds = new Set(base.items.map((item) => item.id));
+  const items = [...base.items];
+  for (const item of legacy) {
+    if (knownIds.has(item.id)) continue;
+    items.push({
+      ...item,
+      status: "active",
+      position: items.filter((entry) => entry.kind === item.kind && entry.category === item.category).length,
+    });
+  }
+  return { version: 2, items };
+}
+
+async function saveCatalog(env, catalog) {
+  await env.GALLERY.put(CATALOG_KEY, JSON.stringify(catalog));
+}
+
+function publicItems(catalog) {
+  return catalog.items.filter((item) => item.status === "active");
+}
+
+function validCategory(kind, category) {
+  return CATEGORIES[kind]?.has(category) === true;
+}
+
+function catalogItem(catalog, id) {
+  return catalog.items.find((item) => item.id === id);
+}
+
 async function handle(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -96,7 +134,12 @@ async function handle(request, env) {
     return new Response(null, { status: 204 });
   }
   if (method === "GET" && path === "/gallery") {
-    return json({ items: await allItems(env.GALLERY, url.origin) });
+    const catalog = await readCatalog(env, url.origin);
+    return json({ items: publicItems(catalog).filter((item) =>
+      item.kind !== "slot" && item.path?.startsWith(`${url.origin}/photos/`)) });
+  }
+  if (method === "GET" && path === "/catalog") {
+    return json({ items: publicItems(await readCatalog(env, url.origin)) });
   }
   const imageMatch = /^\/photos\/([a-f0-9-]{36})\/image$/.exec(path);
   if (method === "GET" && imageMatch) {
@@ -113,11 +156,12 @@ async function handle(request, env) {
     });
   }
 
-  if (!["POST", "DELETE"].includes(method)) return error("Not found.", 404);
+  if (!["GET", "POST", "PATCH", "DELETE"].includes(method)) return error("Not found.", 404);
   if (request.headers.get("Origin") !== SITE_ORIGIN) return error("Origin is not allowed.", 403);
   if (!env.ADMIN_PASSWORD || env.ADMIN_PASSWORD.length < 16) return error("Admin access is not configured.", 503);
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  if (!(await rateLimit(env.LOGIN_LIMIT, `login:${ip}`))) return error("Too many attempts. Try again in a minute.", 429);
+  if (method !== "GET" && !(await rateLimit(env.LOGIN_LIMIT, `login:${ip}`)))
+    return error("Too many attempts. Try again in a minute.", 429);
 
   if (method === "POST" && path === "/login") {
     if (Number(request.headers.get("Content-Length")) > 1024) return error("Request is too large.", 413);
@@ -130,6 +174,10 @@ async function handle(request, env) {
   if (!(await matchesPassword(request.headers.get("X-Admin-Password"), env.ADMIN_PASSWORD)))
     return error("Incorrect password.", 401);
 
+  if (method === "GET" && path === "/admin/catalog") {
+    return json(await readCatalog(env, url.origin));
+  }
+
   if (method === "POST" && path === "/photos") {
     if (!(await rateLimit(env.UPLOAD_LIMIT, `upload:${ip}`)))
       return error("Please wait before adding another photograph.", 429);
@@ -140,11 +188,15 @@ async function handle(request, env) {
     const file = form.get("photo");
     const kind = form.get("kind");
     const category = form.get("category");
+    const replaceId = form.get("replaceId");
     const title = form.get("title");
     const alt = form.get("alt");
     if (!(file instanceof File) || !file.size || file.size > MAX_BYTES)
       return error("Choose a JPEG, PNG or WebP image up to 8 MB.", 400);
-    if (!CATEGORIES[kind]?.has(category)) return error("Choose a valid collection.", 400);
+    const catalog = await readCatalog(env, url.origin);
+    const replacing = replaceId ? catalogItem(catalog, replaceId) : null;
+    if (replaceId && !replacing) return error("Photograph not found.", 404);
+    if (!replacing && !validCategory(kind, category)) return error("Choose a valid collection.", 400);
     if (typeof title !== "string" || !title.trim() || title.length > 80 ||
         typeof alt !== "string" || !alt.trim() || alt.length > 180)
       return error("Add a short title and image description.", 400);
@@ -155,24 +207,81 @@ async function handle(request, env) {
     const digest = await crypto.subtle.digest("SHA-256", bytes);
     const sha256 = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
     if (await isPublishedPhoto(sha256)) return error("This exact image is already in the portfolio.", 409);
-    const existing = await allItems(env.GALLERY, url.origin);
-    if (existing.some((item) => item.sha256 === sha256))
+    if (catalog.items.some((item) => item.sha256 === sha256))
       return error("This exact image is already in the portfolio.", 409);
-    const id = crypto.randomUUID();
-    const item = {
-      id, kind, category, title: title.trim(), alt: alt.trim(), sha256,
-      type, addedAt: new Date().toISOString(),
+    const imageId = crypto.randomUUID();
+    const imagePath = `${url.origin}/photos/${imageId}/image`;
+    const item = replacing ? {
+      ...replacing, title: title.trim(), alt: alt.trim(), sha256, type,
+      path: imagePath, status: "active", removedAt: null,
+    } : {
+      id: imageId, kind, category, title: title.trim(), alt: alt.trim(), sha256,
+      type, path: imagePath, addedAt: new Date().toISOString(), status: "active",
+      position: catalog.items.filter((entry) => entry.kind === kind && entry.category === category).length,
     };
-    await env.GALLERY.put(`photo:${id}`, bytes.buffer, { metadata: item });
-    return json({ item: { ...item, path: `${url.origin}/photos/${id}/image` } }, 201);
+    await env.GALLERY.put(`photo:${imageId}`, bytes.buffer, { metadata: item });
+    if (replacing) catalog.items[catalog.items.indexOf(replacing)] = item;
+    else catalog.items.push(item);
+    await saveCatalog(env, catalog);
+    return json({ item }, replacing ? 200 : 201);
   }
-  const deleteMatch = /^\/photos\/([a-f0-9-]{36})$/.exec(path);
-  if (method === "DELETE" && deleteMatch) {
-    const key = `photo:${deleteMatch[1]}`;
-    const existing = await env.GALLERY.get(key);
-    if (!existing) return error("Photograph not found.", 404);
-    await env.GALLERY.delete(key);
+  const restoreMatch = /^\/photos\/([a-z0-9-]+)\/restore$/.exec(path);
+  if (method === "POST" && restoreMatch) {
+    const catalog = await readCatalog(env, url.origin);
+    const item = catalogItem(catalog, restoreMatch[1]);
+    if (!item) return error("Photograph not found.", 404);
+    item.status = "active";
+    item.removedAt = null;
+    await saveCatalog(env, catalog);
+    return json({ item });
+  }
+  const staticDeleteMatch = /^\/photos\/([a-z0-9-]+)$/.exec(path);
+  if (method === "DELETE" && staticDeleteMatch) {
+    const catalog = await readCatalog(env, url.origin);
+    const item = catalogItem(catalog, staticDeleteMatch[1]);
+    if (!item) return error("Photograph not found.", 404);
+    item.status = "removed";
+    item.removedAt = new Date().toISOString();
+    await saveCatalog(env, catalog);
     return json({ ok: true });
+  }
+  const categoryMatch = /^\/categories\/(tattoo|design)\/(botanical|creatures|concepts|animals|plants|other)\/(clear|restore)$/.exec(path);
+  if (method === "POST" && categoryMatch) {
+    const [, kind, category, action] = categoryMatch;
+    if (!validCategory(kind, category)) return error("Choose a valid collection.", 400);
+    const catalog = await readCatalog(env, url.origin);
+    let changed = 0;
+    for (const item of catalog.items) {
+      const belongs = item.category === category &&
+        (item.kind === kind || (kind === "design" && item.kind === "slot"));
+      if (!belongs || item.status === (action === "clear" ? "removed" : "active")) continue;
+      item.status = action === "clear" ? "removed" : "active";
+      item.removedAt = action === "clear" ? new Date().toISOString() : null;
+      changed++;
+    }
+    await saveCatalog(env, catalog);
+    return json({ changed });
+  }
+  const editMatch = /^\/photos\/([a-z0-9-]+)$/.exec(path);
+  if (method === "PATCH" && editMatch) {
+    const catalog = await readCatalog(env, url.origin);
+    const item = catalogItem(catalog, editMatch[1]);
+    if (!item || item.kind === "slot") return error("Photograph not found.", 404);
+    let submitted;
+    try { submitted = await request.json(); } catch { return error("Invalid request.", 400); }
+    const nextCategory = submitted.category || item.category;
+    if (!validCategory(item.kind, nextCategory)) return error("Choose a valid collection.", 400);
+    if (typeof submitted.title !== "string" || !submitted.title.trim() || submitted.title.length > 80 ||
+        typeof submitted.alt !== "string" || !submitted.alt.trim() || submitted.alt.length > 180)
+      return error("Add a short title and image description.", 400);
+    if (nextCategory !== item.category) {
+      item.position = catalog.items.filter((entry) => entry.kind === item.kind && entry.category === nextCategory).length;
+      item.category = nextCategory;
+    }
+    item.title = submitted.title.trim();
+    item.alt = submitted.alt.trim();
+    await saveCatalog(env, catalog);
+    return json({ item });
   }
   return error("Not found.", 404);
 }

@@ -1,64 +1,50 @@
 const API_ROOT = window.SALI_PHOTO_API || "";
 const MAX_BYTES = 8 * 1024 * 1024;
 const CATEGORIES = {
-  tattoo: [["botanical", "Botanical"], ["creatures", "Creatures"], ["concepts", "Concepts"]],
+  tattoo: [["botanical", "Botanical"], ["creatures", "Creatures"], ["concepts", "Conceptual"]],
   design: [["animals", "Animals"], ["plants", "Plants"], ["other", "Other"]],
 };
-const connectForm = document.querySelector("#connect-form");
-const uploadForm = document.querySelector("#upload-form");
-const kindInput = document.querySelector("#kind");
-const categoryInput = document.querySelector("#category");
-const fileInput = document.querySelector("#photo");
-const previewImage = document.querySelector("#preview-image");
-const previewPlaceholder = document.querySelector("#preview span");
-const libraryList = document.querySelector("#library-list");
-const existingList = document.querySelector("#existing-list");
-const statusLine = document.querySelector("#status");
-const EXISTING_PAGES = [
-  { path: "../index.html", cards: ".work-grid .work-card", cover: ".hero-main-image img", coverTitle: "Homepage cover", label: "Tattoo" },
-  { path: "../animals.html", cards: ".category-gallery-grid .work-card", cover: ".category-hero-media img", coverTitle: "Animals cover", label: "Animals · sketch" },
-  { path: "../plants.html", cards: ".category-gallery-grid .work-card", cover: ".category-hero-media img", coverTitle: "Plants cover", label: "Plants · sketch" },
-  { path: "../other.html", cards: ".category-gallery-grid .work-card", cover: ".category-hero-media img", coverTitle: "Other cover", label: "Other · sketch" },
+const SLOT_GROUPS = [
+  ["First screen", ["hero-main", "hero-accent"]],
+  ["Meet the artist", ["artist-action", "artist-portrait"]],
+  ["Sketchbook cards on home", ["design-cover-animals", "design-cover-plants", "design-cover-other"]],
+  ["Sketchbook page covers", ["design-hero-animals", "design-hero-plants", "design-hero-other"]],
 ];
+const $ = (selector) => document.querySelector(selector);
+const connectForm = $("#connect-form");
+const uploadForm = $("#upload-form");
+const kindInput = $("#kind");
+const categoryInput = $("#category");
+const fileInput = $("#photo");
 let password = "";
 let catalog = { items: [] };
-let existingPhotos = [];
-let existingLoadState = "loading";
-let existingLoadId = 0;
 let knownHashes = new Set();
+let replacementId = null;
 let previewUrl = null;
 
-function setStatus(message, error = false) {
-  statusLine.textContent = message;
-  statusLine.classList.toggle("error", error);
+function status(message, error = false) {
+  $("#status").textContent = message;
+  $("#status").classList.toggle("error", error);
 }
-function setBusy(form, busy) {
-  form.querySelectorAll("button, input, select, textarea").forEach((field) => {
-    field.disabled = busy;
-  });
-  form.setAttribute("aria-busy", String(busy));
+function busy(form, value) {
+  form.querySelectorAll("button, input, select, textarea").forEach((field) => { field.disabled = value; });
+  form.setAttribute("aria-busy", String(value));
 }
-if (!API_ROOT) {
-  setBusy(connectForm, true);
-  setStatus("Photo publishing is being connected. Please try again soon.");
+function categories() {
+  categoryInput.replaceChildren(...CATEGORIES[kindInput.value].map(([value, label]) => new Option(label, value)));
 }
-function updateCategories() {
-  categoryInput.replaceChildren();
-  CATEGORIES[kindInput.value].forEach(([value, label]) => categoryInput.add(new Option(label, value)));
+kindInput.addEventListener("change", categories);
+categories();
+function connected(value) {
+  connectForm.hidden = value;
+  $("#disconnect").hidden = !value;
+  $("#upload-panel").hidden = !value;
+  $("#library-panel").hidden = !value;
+  $("#connection-state").textContent = value ? "Signed in" : "Signed out";
+  $("#connection-state").classList.toggle("connected", value);
 }
-kindInput.addEventListener("change", updateCategories);
-updateCategories();
-function showConnected(connected) {
-  connectForm.hidden = connected;
-  document.querySelector("#disconnect").hidden = !connected;
-  document.querySelector("#upload-panel").hidden = !connected;
-  document.querySelector("#library-panel").hidden = !connected;
-  const badge = document.querySelector("#connection-state");
-  badge.textContent = connected ? "Signed in" : "Signed out";
-  badge.classList.toggle("connected", connected);
-}
-async function api(path, { method = "GET", body, authenticated = false } = {}) {
-  if (!API_ROOT) throw new Error("Photo publishing is being set up. Please try again later.");
+async function api(path, { method = "GET", body, authenticated = true } = {}) {
+  if (!API_ROOT) throw new Error("Photo publishing is not connected.");
   const response = await fetch(`${API_ROOT}${path}`, {
     method,
     headers: {
@@ -70,223 +56,251 @@ async function api(path, { method = "GET", body, authenticated = false } = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    if (response.status === 401) { password = ""; showConnected(false); }
+    if (response.status === 401) { password = ""; connected(false); }
     throw new Error(data.error || `Request failed (${response.status}).`);
   }
   return data;
 }
-async function loadKnownHashes() {
-  try {
-    const response = await fetch("../portfolio-uploads.json", { cache: "no-store" });
-    if (!response.ok) return;
-    const manifest = await response.json();
-    knownHashes = new Set((manifest.known || []).map((item) => item.sha256));
-  } catch { /* Server checks previously uploaded photos too. */ }
+if (!API_ROOT) {
+  busy(connectForm, true);
+  status("Photo publishing is not connected.", true);
 }
-loadKnownHashes();
-function existingPhoto(image, pageUrl, title, label) {
-  const source = image?.getAttribute("src");
-  if (!source) return null;
-  const url = new URL(source, pageUrl);
-  if (url.origin !== location.origin || !/\.(jpe?g|png|webp)$/i.test(url.pathname)) return null;
-  return { path: url.href, title: title || image.alt || "Artwork", label };
-}
-async function loadExistingPhotos(loadId) {
-  const results = await Promise.allSettled(EXISTING_PAGES.map(async (page) => {
-    const pageUrl = new URL(page.path, document.baseURI);
-    const response = await fetch(pageUrl, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Could not load ${pageUrl.pathname}`);
-    const documentOnSite = new DOMParser().parseFromString(await response.text(), "text/html");
-    const cards = [...documentOnSite.querySelectorAll(page.cards)]
-      .map((card) => existingPhoto(card.querySelector("img"), pageUrl, card.dataset.title, card.dataset.kind || page.label))
-      .filter(Boolean);
-    const cover = existingPhoto(documentOnSite.querySelector(page.cover), pageUrl, page.coverTitle, page.label);
-    return cover ? [...cards, cover] : cards;
-  }));
-  if (loadId !== existingLoadId) return;
-  const unique = new Map();
-  for (const result of results) {
-    if (result.status !== "fulfilled") continue;
-    for (const photo of result.value) {
-      if (!unique.has(photo.path)) unique.set(photo.path, photo);
-    }
-  }
-  existingPhotos = [...unique.values()];
-  existingLoadState = results.some((result) => result.status === "rejected") ? "partial" : "loaded";
-  renderLibrary();
-}
+fetch("../portfolio-uploads.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : null)
+  .then((manifest) => { knownHashes = new Set((manifest?.known || []).map((item) => item.sha256)); })
+  .catch(() => {});
+
 connectForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  password = document.querySelector("#password").value;
-  setBusy(connectForm, true);
-  setStatus("Checking password…");
+  password = $("#password").value;
+  busy(connectForm, true);
+  status("Checking password…");
   try {
-    await api("/login", { method: "POST", body: { password } });
-    document.querySelector("#password").value = "";
-    catalog = await api("/gallery");
-    existingPhotos = [];
-    existingLoadState = "loading";
-    showConnected(true);
-    renderLibrary();
-    setStatus("Signed in. Choose a photograph to publish.");
-    loadExistingPhotos(++existingLoadId);
+    await api("/login", { method: "POST", body: { password }, authenticated: false });
+    catalog = await api("/admin/catalog");
+    $("#password").value = "";
+    connected(true);
+    renderCatalog();
+    status("Signed in. You can manage every photo on the site.");
   } catch (error) {
     password = "";
-    setStatus(error.message, true);
-  } finally { setBusy(connectForm, false); }
+    status(error.message, true);
+  } finally { busy(connectForm, false); }
 });
-document.querySelector("#disconnect").addEventListener("click", () => {
+$("#disconnect").addEventListener("click", () => {
   password = "";
   catalog = { items: [] };
-  existingPhotos = [];
-  existingLoadId++;
-  showConnected(false);
-  libraryList.replaceChildren();
-  existingList.replaceChildren();
-  setStatus("Signed out. The password has been cleared from this tab.");
+  resetReplacement();
+  connected(false);
+  $("#catalog-groups").replaceChildren();
+  $("#removed-list").replaceChildren();
+  status("Signed out. The password has been cleared from this tab.");
 });
 fileInput.addEventListener("change", () => {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   const file = fileInput.files[0];
-  previewImage.hidden = !file;
-  previewPlaceholder.hidden = !!file;
-  if (file) {
-    previewUrl = URL.createObjectURL(file);
-    previewImage.src = previewUrl;
-  } else {
-    previewUrl = null;
-    previewImage.removeAttribute("src");
-  }
+  $("#preview-image").hidden = !file;
+  $("#preview span").hidden = !!file;
+  previewUrl = file ? URL.createObjectURL(file) : null;
+  if (file) $("#preview-image").src = previewUrl;
+  else $("#preview-image").removeAttribute("src");
 });
 async function sha256(file) {
   const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+function resetReplacement() {
+  replacementId = null;
+  $("#replace-message").hidden = true;
+  $("#upload-destination").hidden = false;
+  $("#upload-title").textContent = "Add one photograph";
+  $(".publish-button").firstChild.textContent = "Publish photograph ";
+  uploadForm.reset();
+  categories();
+  fileInput.dispatchEvent(new Event("change"));
+}
+function replace(item) {
+  replacementId = item.id;
+  $("#replace-message").hidden = false;
+  $("#replace-description").textContent = `Replacing “${item.title}”. The new photo will take its place on the website.`;
+  $("#upload-destination").hidden = true;
+  $("#upload-title").textContent = "Replace photograph";
+  $(".publish-button").firstChild.textContent = "Save replacement ";
+  $("#title").value = item.title;
+  $("#alt").value = item.alt || "";
+  $("#upload-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+  fileInput.focus();
+}
+$("#cancel-replace").addEventListener("click", resetReplacement);
 uploadForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const file = fileInput.files[0];
   if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    setStatus("Choose a JPEG, PNG or WebP photograph.", true); return;
+    status("Choose a JPEG, PNG or WebP image.", true); return;
   }
-  if (file.size > MAX_BYTES) {
-    setStatus("This file is over 8 MB. Export a smaller copy first.", true); return;
+  if (file.size > MAX_BYTES) { status("This file is over 8 MB. Export a smaller copy first.", true); return; }
+  if (!replacementId && !CATEGORIES[kindInput.value]?.some(([value]) => value === categoryInput.value)) {
+    status("Choose a valid collection.", true); return;
   }
-  const kind = kindInput.value;
-  const category = categoryInput.value;
-  if (!CATEGORIES[kind]?.some(([value]) => value === category)) {
-    setStatus("Choose a valid collection.", true); return;
-  }
-  setBusy(uploadForm, true);
-  setStatus("Checking photograph…");
+  busy(uploadForm, true);
+  status("Checking image…");
   try {
     const hash = await sha256(file);
     if (knownHashes.has(hash) || catalog.items.some((item) => item.sha256 === hash))
       throw new Error("This exact image is already in the portfolio.");
     const form = new FormData();
     form.set("photo", file);
-    form.set("kind", kind);
-    form.set("category", category);
-    form.set("title", document.querySelector("#title").value.trim());
-    form.set("alt", document.querySelector("#alt").value.trim());
-    setStatus("Uploading photograph…");
-    const published = await api("/photos", { method: "POST", body: form, authenticated: true });
-    catalog.items.push(published.item);
-    uploadForm.reset();
-    updateCategories();
-    fileInput.dispatchEvent(new Event("change"));
-    renderLibrary();
-    setStatus("Published. The photograph will appear on the website shortly.");
+    form.set("title", $("#title").value.trim());
+    form.set("alt", $("#alt").value.trim());
+    if (replacementId) form.set("replaceId", replacementId);
+    else { form.set("kind", kindInput.value); form.set("category", categoryInput.value); }
+    status("Uploading image…");
+    const result = await api("/photos", { method: "POST", body: form });
+    const index = catalog.items.findIndex((item) => item.id === result.item.id);
+    if (index >= 0) catalog.items[index] = result.item;
+    else catalog.items.push(result.item);
+    resetReplacement();
+    renderCatalog();
+    status("Saved. The website will update shortly.");
   } catch (error) {
-    setStatus(`Could not publish: ${error.message}`, true);
-  } finally { setBusy(uploadForm, false); }
+    status(`Could not save: ${error.message}`, true);
+  } finally { busy(uploadForm, false); }
 });
-function renderLibrary() {
-  existingList.replaceChildren();
-  const existingWarning = document.querySelector("#existing-warning");
-  existingWarning.hidden = true;
-  if (existingLoadState === "loading") {
-    const loading = document.createElement("p");
-    loading.className = "muted";
-    loading.textContent = "Loading photographs already on the website…";
-    existingList.append(loading);
-  } else {
-    for (const photo of existingPhotos) {
-      const link = document.createElement("a");
-      link.className = "existing-card";
-      link.href = photo.path;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.setAttribute("aria-label", `View ${photo.title} at full size`);
-      const image = document.createElement("img");
-      image.src = photo.path;
-      image.alt = photo.title;
-      image.loading = "lazy";
-      const info = document.createElement("span");
-      info.className = "existing-card-info";
-      const title = document.createElement("strong");
-      title.textContent = photo.title;
-      const label = document.createElement("small");
-      label.textContent = photo.label;
-      info.append(title, label);
-      link.append(image, info);
-      existingList.append(link);
-    }
-    if (existingLoadState === "partial") {
-      existingWarning.hidden = false;
-      existingWarning.textContent = "Some website pages could not be checked. Refresh this page to try again.";
-    } else if (!existingPhotos.length) {
-      existingWarning.hidden = false;
-      existingWarning.textContent = "No existing portfolio photographs were found.";
-    }
+function element(tag, className, content) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (content != null) node.textContent = content;
+  return node;
+}
+function button(label, action, className = "card-button") {
+  const node = element("button", className, label);
+  node.type = "button";
+  node.addEventListener("click", action);
+  return node;
+}
+function updateItem(next) {
+  const index = catalog.items.findIndex((item) => item.id === next.id);
+  if (index >= 0) catalog.items[index] = next;
+  renderCatalog();
+}
+async function remove(item) {
+  if (!confirm(`Remove “${item.title}” from the website? You can restore it later.`)) return;
+  status("Removing photo…");
+  try {
+    await api(`/photos/${encodeURIComponent(item.id)}`, { method: "DELETE" });
+    updateItem({ ...item, status: "removed" });
+    status("Removed. The website will update shortly.");
+  } catch (error) { status(error.message, true); }
+}
+async function restore(item) {
+  status("Restoring photo…");
+  try {
+    const result = await api(`/photos/${encodeURIComponent(item.id)}/restore`, { method: "POST" });
+    updateItem(result.item);
+    status("Restored. The website will update shortly.");
+  } catch (error) { status(error.message, true); }
+}
+function edit(item, host) {
+  const form = element("form", "card-edit");
+  const title = element("input");
+  title.type = "text"; title.maxLength = 80; title.required = true; title.value = item.title;
+  title.setAttribute("aria-label", "Internal title");
+  const alt = element("textarea");
+  alt.maxLength = 180; alt.required = true; alt.value = item.alt || "";
+  alt.setAttribute("aria-label", "Image description");
+  const category = element("select");
+  category.setAttribute("aria-label", "Collection");
+  CATEGORIES[item.kind].forEach(([value, label]) => category.add(new Option(label, value)));
+  category.value = item.category;
+  const save = element("button", "card-button", "Save details");
+  save.type = "submit";
+  form.append(title, alt, category, save, button("Cancel", () => form.remove()));
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    busy(form, true);
+    try {
+      const result = await api(`/photos/${encodeURIComponent(item.id)}`, {
+        method: "PATCH", body: { title: title.value.trim(), alt: alt.value.trim(), category: category.value },
+      });
+      updateItem(result.item);
+      status("Details saved.");
+    } catch (error) { status(error.message, true); busy(form, false); }
+  });
+  host.append(form);
+  title.focus();
+}
+function card(item) {
+  const host = element("div", `manage-card${item.status === "removed" ? " is-removed" : ""}`);
+  if (item.path) {
+    const image = element("img");
+    image.src = item.path; image.alt = item.alt || item.title; image.loading = "lazy";
+    host.append(image);
+  } else host.append(element("div", "empty-photo", "No photo"));
+  const info = element("div", "manage-card-info");
+  info.append(element("strong", "", item.title));
+  if (item.kind === "slot") info.append(element("small", "", item.id.replaceAll("-", " ")));
+  const actions = element("div", "card-actions");
+  if (item.status === "removed") actions.append(button("Restore", () => restore(item)));
+  else {
+    actions.append(button("Replace", () => replace(item)));
+    if (item.kind !== "slot") actions.append(button("Edit details", () => edit(item, info)));
+    actions.append(button("Remove", () => remove(item), "card-button danger"));
   }
-  document.querySelector("#existing-count").textContent = existingLoadState === "loading" ? "Loading…" : `${existingPhotos.length} photos`;
-  libraryList.replaceChildren();
-  const items = [...catalog.items].reverse();
-  document.querySelector("#added-count").textContent = `${items.length} photos`;
-  document.querySelector("#photo-count").textContent = existingLoadState === "loading"
-    ? `${items.length} added`
-    : `${existingPhotos.length + items.length} total`;
-  if (!items.length) {
-    const empty = document.createElement("p");
-    empty.className = "muted";
-    empty.textContent = "No photographs have been added through this page yet.";
-    libraryList.append(empty);
-    return;
-  }
-  for (const item of items) {
-    const row = document.createElement("div");
-    row.className = "library-item";
-    const image = document.createElement("img");
-    image.src = item.path;
-    image.alt = "";
-    image.loading = "lazy";
-    const info = document.createElement("div");
-    info.className = "library-item-info";
-    const title = document.createElement("strong");
-    title.textContent = item.title;
-    const category = document.createElement("span");
-    category.textContent = `${item.kind === "tattoo" ? "Tattoo" : "Design"} · ${item.category}`;
-    info.append(title, category);
-    const remove = document.createElement("button");
-    remove.type = "button";
-    remove.className = "remove-button";
-    remove.textContent = "Remove";
-    remove.setAttribute("aria-label", `Remove ${item.title} from the website`);
-    remove.addEventListener("click", async () => {
-      if (!confirm(`Remove “${item.title}” from the website?`)) return;
-      remove.disabled = true;
-      setStatus("Removing photograph…");
+  info.append(actions);
+  host.append(info);
+  return host;
+}
+function group(title, items, { kind, category } = {}) {
+  const host = element("section", "library-group");
+  const head = element("div", "library-group-heading");
+  head.append(element("h3", "", title), element("span", "muted", `${items.filter((item) => item.status === "active").length} photos`));
+  if (kind && category) {
+    const actions = element("div", "group-actions");
+    actions.append(button("Add photo", () => {
+      resetReplacement(); kindInput.value = kind; categories(); categoryInput.value = category;
+      $("#upload-panel").scrollIntoView({ behavior: "smooth", block: "start" }); fileInput.focus();
+    }));
+    const active = catalog.items.some((item) => item.category === category &&
+      (item.kind === kind || (kind === "design" && item.kind === "slot")) && item.status === "active");
+    actions.append(button(active ? "Clear collection" : "Restore collection", async () => {
+      const action = active ? "clear" : "restore";
+      if (active && !confirm(`Remove every photo in ${title}? You can restore the collection later.`)) return;
       try {
-        await api(`/photos/${encodeURIComponent(item.id)}`, { method: "DELETE", authenticated: true });
-        catalog.items = catalog.items.filter((entry) => entry.id !== item.id);
-        renderLibrary();
-        setStatus("Removed. The website will update shortly.");
-      } catch (error) {
-        remove.disabled = false;
-        setStatus(`Could not remove: ${error.message}`, true);
-      }
-    });
-    row.append(image, info, remove);
-    libraryList.append(row);
+        await api(`/categories/${kind}/${category}/${action}`, { method: "POST" });
+        catalog.items.forEach((item) => {
+          if (item.category === category && (item.kind === kind || (kind === "design" && item.kind === "slot")))
+            item.status = active ? "removed" : "active";
+        });
+        renderCatalog();
+        status(active ? "Collection cleared." : "Collection restored.");
+      } catch (error) { status(error.message, true); }
+    }, "card-button subtle"));
+    host.append(head, actions);
+  } else host.append(head);
+  const grid = element("div", "manage-grid");
+  if (items.length) grid.append(...items.map(card));
+  else grid.append(element("p", "muted", "This collection is empty. Add a photo to start."));
+  host.append(grid);
+  return host;
+}
+function renderCatalog() {
+  const active = catalog.items.filter((item) => item.status === "active");
+  $("#photo-count").textContent = `${active.length} photos in use`;
+  const container = $("#catalog-groups");
+  container.replaceChildren();
+  for (const [title, ids] of SLOT_GROUPS) {
+    const slots = ids.map((id) => catalog.items.find((item) => item.id === id)).filter(Boolean);
+    container.append(group(title, slots));
   }
+  for (const [kind, heading] of [["tattoo", "Tattoo gallery"], ["design", "Sketchbook gallery"]]) {
+    container.append(element("h2", "catalog-heading", heading));
+    for (const [category, title] of CATEGORIES[kind]) {
+      const items = active.filter((item) => item.kind === kind && item.category === category)
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      container.append(group(title, items, { kind, category }));
+    }
+  }
+  const removed = catalog.items.filter((item) => item.status === "removed");
+  $("#removed-count").textContent = `${removed.length} photos`;
+  $("#removed-group").hidden = !removed.length;
+  $("#removed-list").replaceChildren(...removed.map(card));
 }

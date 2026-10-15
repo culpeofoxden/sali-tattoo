@@ -73,6 +73,10 @@ if ("IntersectionObserver" in window && !reducedMotion.matches) {
 
 const filterButtons = [...document.querySelectorAll("[data-filter]")];
 const portfolioGrid = document.querySelector(".work-grid");
+function updateGalleryEmpty(grid) {
+  const empty = grid?.querySelector(".gallery-empty");
+  if (empty) empty.hidden = [...grid.querySelectorAll("[data-lightbox]")].some((card) => !card.hidden);
+}
 if (filterButtons.length && portfolioGrid) {
   filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -85,6 +89,7 @@ if (filterButtons.length && portfolioGrid) {
       portfolioGrid.querySelectorAll("[data-category]").forEach((card) => {
         card.hidden = chosen !== "all" && card.dataset.category !== chosen;
       });
+      updateGalleryEmpty(portfolioGrid);
     });
   });
   root.classList.add("enhanced");
@@ -177,98 +182,83 @@ if (
   });
 }
 
-// Original portfolio cards live in HTML. Photos uploaded through the studio
-// appear from the photo API when it is connected.
-async function loadPublishedArtwork() {
+// The photo API is the shared source for desktop and mobile. The original HTML
+// remains a fallback if the API and local catalog are temporarily unavailable.
+const apiRoot = window.SALI_PHOTO_API || "";
+const validLocalPath = /^images\/[a-z0-9-]+\.(?:jpg|jpeg|png|webp)$/i;
+const validApiPath = (path) =>
+  !!apiRoot && path.startsWith(`${apiRoot}/photos/`) &&
+  /^[a-f0-9-]{36}\/image$/.test(path.slice(`${apiRoot}/photos/`.length));
+function safeImagePath(path) {
+  return typeof path === "string" && (validLocalPath.test(path) || validApiPath(path));
+}
+async function loadCatalog() {
+  for (const url of [apiRoot && `${apiRoot}/catalog`, "portfolio-catalog.json"].filter(Boolean)) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) continue;
+      const catalog = await response.json();
+      if (Array.isArray(catalog.items)) return catalog.items;
+    } catch { /* Try the next source. */ }
+  }
+  return null;
+}
+function renderCatalog(items) {
+  const active = items.filter((item) => item?.status === "active" && safeImagePath(item.path));
+  const byId = new Map(active.map((item) => [item.id, item]));
+  document.querySelectorAll("img[data-photo-slot]").forEach((image) => {
+    const item = byId.get(image.dataset.photoSlot);
+    image.hidden = !item;
+    const figure = image.closest(".hero-mobile-image, .hero-main-image, .hero-accent-image");
+    if (figure) figure.hidden = !item;
+    if (!item) {
+      image.removeAttribute("src");
+      return;
+    }
+    image.src = item.path;
+    image.alt = String(item.alt || item.title || "Artwork by Vita");
+    if (Number.isInteger(item.width) && item.width > 0) image.width = item.width;
+    if (Number.isInteger(item.height) && item.height > 0) image.height = item.height;
+  });
+
   const target = document.querySelector(".work-grid, .category-gallery-grid");
   if (!target) return;
-  const items = [];
-  try {
-    const response = await fetch("portfolio-uploads.json", { cache: "no-store" });
-    if (response.ok) {
-      const catalog = await response.json();
-      if (Array.isArray(catalog.items)) items.push(...catalog.items);
-    }
-  } catch { /* Keep the built-in gallery available. */ }
-  const apiRoot = window.SALI_PHOTO_API || "";
-  if (apiRoot) {
-    try {
-      const response = await fetch(`${apiRoot}/gallery`, { cache: "no-store" });
-      if (response.ok) {
-        const catalog = await response.json();
-        if (Array.isArray(catalog.items)) items.push(...catalog.items);
-      }
-    } catch { /* Keep the built-in gallery available. */ }
-  }
-
-  const pageName = location.pathname.split("/").pop();
   const designCategory = {
     "animals.html": "animals",
     "plants.html": "plants",
     "other.html": "other",
-  }[pageName];
-  const validLocalPath = /^images\/uploads\/[a-z0-9-]+\.(?:jpg|jpeg|png|webp)$/i;
-  const validApiPath = (path) =>
-    !!apiRoot && path.startsWith(`${apiRoot}/photos/`) &&
-    /^[a-f0-9-]{36}\/image$/.test(path.slice(`${apiRoot}/photos/`.length));
-  const seenPaths = new Set();
-  const allowedTattooCategories = ["botanical", "creatures", "concepts"];
-
-  for (const item of items) {
-    if (!item || typeof item.path !== "string" ||
-        !(validLocalPath.test(item.path) || validApiPath(item.path)) || seenPaths.has(item.path))
-      continue;
-    if (designCategory) {
-      if (item.kind !== "design" || item.category !== designCategory)
-        continue;
-    } else if (
-      item.kind !== "tattoo" ||
-      !allowedTattooCategories.includes(item.category)
-    ) {
-      continue;
-    }
-    seenPaths.add(item.path);
-
+  }[location.pathname.split("/").pop()];
+  const kind = designCategory ? "design" : "tattoo";
+  const galleryItems = active.filter((item) => item.kind === kind &&
+    (!designCategory || item.category === designCategory))
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const cards = galleryItems.map((item) => {
     const card = document.createElement("a");
     card.className = "work-card";
     card.href = item.path;
     card.dataset.lightbox = "";
     card.dataset.title = String(item.title || "Original artwork");
-    if (!designCategory) card.dataset.category = item.category;
-    else card.dataset.kind = "Original design";
-
-    const photo = document.createElement("img");
-    photo.src = item.path;
-    photo.alt = String(item.alt || item.title || "Artwork by Vita");
-    photo.loading = "lazy";
-    if (Number.isInteger(item.width) && item.width > 0)
-      photo.width = item.width;
-    if (Number.isInteger(item.height) && item.height > 0)
-      photo.height = item.height;
-    card.append(photo);
-
-    if (designCategory) {
-      const overlay = document.createElement("span");
-      overlay.className = "work-card-overlay";
-      const copy = document.createElement("span");
-      const title = document.createElement("strong");
-      title.textContent = String(item.title || "New design");
-      copy.append(title);
-      const arrow = document.createElement("span");
-      arrow.className = "work-open";
-      arrow.setAttribute("aria-hidden", "true");
-      arrow.textContent = "↗";
-      overlay.append(copy, arrow);
-      card.append(overlay);
-    }
-    target.append(card);
-  }
-
+    if (designCategory) card.dataset.kind = "Original design";
+    else card.dataset.category = item.category;
+    const image = document.createElement("img");
+    image.src = item.path;
+    image.alt = String(item.alt || item.title || "Artwork by Vita");
+    image.loading = "lazy";
+    if (Number.isInteger(item.width) && item.width > 0) image.width = item.width;
+    if (Number.isInteger(item.height) && item.height > 0) image.height = item.height;
+    card.append(image);
+    return card;
+  });
+  const empty = document.createElement("p");
+  empty.className = "gallery-empty";
+  empty.textContent = "New work is coming soon.";
+  target.replaceChildren(...cards, empty);
   const chosen = document.querySelector("[data-filter].is-active")?.dataset.filter;
   if (chosen && chosen !== "all") {
     target.querySelectorAll("[data-category]").forEach((card) => {
       card.hidden = card.dataset.category !== chosen;
     });
   }
+  updateGalleryEmpty(target);
 }
-loadPublishedArtwork();
+loadCatalog().then((items) => { if (items) renderCatalog(items); });

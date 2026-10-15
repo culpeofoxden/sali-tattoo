@@ -19,16 +19,17 @@ Then open `http://localhost:8000/`. No build step or package installation is req
 - `admin/index.html` — password-based photo publishing for Vita
 - `worker/` — private photo API for Cloudflare Workers and KV
 - `portfolio-uploads.json` — hashes of the original artwork for duplicate checks
+- `portfolio-catalog.json` — original photos, gallery categories and editable image slots
 - `custom.html`, `fine-line.html`, `floral.html`, `ornamental.html` — legacy redirects
 
 The tattoo portfolio and design pages open full-size images with JavaScript and remain ordinary image links without it. The mobile menu uses native `details`. Motion respects the visitor's reduced-motion preference.
 
 ## Updating content
 
-- For new photos, open `https://sali.tattoo/admin/`. Vita signs in with the studio password, chooses the tattoo gallery or a design collection, and uploads one image. She can remove photos added through the admin page. The password stays in browser memory for that tab and is sent only over HTTPS to the photo API.
+- Open `https://sali.tattoo/admin/`. Vita signs in with the studio password and can add, replace, remove, restore or recategorize portfolio images. The two first-screen photos, two artist photos and all sketchbook covers are independent slots. The password stays in browser memory for that tab and is sent only over HTTPS to the photo API.
 - The admin page accepts JPEG, PNG and WebP up to 8 MB per file. It rejects byte-for-byte duplicates of the catalogued images. Check visually for alternate crops or edits of an existing tattoo before publishing.
-- The original HTML cards are still maintained in the HTML files. The admin page manages only images stored in Cloudflare KV. The public site loads them from the API, so no GitHub account or token is needed for routine uploads.
-- If editing manually, add artwork to `images/` and update the corresponding HTML card with an accurate description and intrinsic image width and height.
+- The API imports the original catalog from `portfolio-catalog.json` on first use and stores changes in Cloudflare KV. The public site uses that shared catalog on desktop and mobile, so no GitHub account or token is needed for routine photo changes. The original HTML images remain a fallback during an API outage.
+- If adding original artwork manually, add it to `images/`, update `portfolio-catalog.json` and its hashes in `portfolio-uploads.json`, and keep fallback HTML in sync.
 - Keep tattoo photos in the main gallery and sketches in the three design pages. Check for duplicate tattoos before adding images.
 - See `PHOTO_SELECTION.md` for the source-photo mapping and duplicate decisions from the September 2026 update.
 - Keep the category pages, social metadata, and `sitemap.xml` in sync with significant content changes.
@@ -39,7 +40,7 @@ Before publishing, check the site at desktop and narrow mobile widths, including
 
 ## Photo API
 
-The Worker is deployed at `https://sali-photo-api.beher-dan.workers.dev`; its KV namespace and rate limits are configured in Cloudflare. `photo-api-config.js` points the site to it. The one-time setup still needs an `ADMIN_PASSWORD` secret in the Worker settings. Use a unique password of at least 16 characters and do not put it in this repository. After setting it, sign in at `https://sali.tattoo/admin/` and upload a photo to check the complete publishing flow.
+The Worker is deployed at `https://sali-photo-api.beher-dan.workers.dev`; its KV namespace and rate limits are configured in Cloudflare. `photo-api-config.js` points the site to it. The Worker needs an `ADMIN_PASSWORD` secret of at least 16 characters. Never put the password in this repository.
 
 For future API changes, deploy `worker/index.js` to the existing Worker and keep the bindings in `worker/wrangler.jsonc`. The Worker checks the public `portfolio-uploads.json` catalog to reject images already on the site.
 

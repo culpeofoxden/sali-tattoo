@@ -25,7 +25,7 @@
       <a class="brand" href="../index.html" aria-label="Sa.li Tattoo home">
         <span>Sa.Li</span><small>Artwork studio</small>
       </a>
-      <a class="back-link" href="../index.html">View website ↗</a>
+      <a class="back-link" href="../index.html">View website <svg class="icon" aria-hidden="true"><use href="../images/icons.svg#arrow-up-right"></use></svg></a>
     </header>
 
     <main>
@@ -33,8 +33,8 @@
         <p class="eyebrow">Private publishing workspace</p>
         <h1>Make space for <em>new work.</em></h1>
         <p>
-          Add a finished tattoo to the portfolio or an original drawing to a
-          design collection. Enter the studio password to publish photos.
+          Keep every photo in its place: first screen, finished tattoos,
+          original drawings and artist portraits. Enter the studio password to manage them.
         </p>
       </div>
 
@@ -47,7 +47,7 @@
           <span class="connection" id="connection-state">Signed out</span>
         </div>
         <p class="muted">
-          Use your studio password to add or remove photographs. Your password
+          Use your studio password to manage every photograph. Your password
           stays in this browser tab and is cleared when you sign out.
         </p>
         <form id="connect-form" class="connect-form">
@@ -77,16 +77,22 @@
           </div>
           <span class="muted">JPEG, PNG or WebP · up to 8 MB</span>
         </div>
+        <div id="replace-message" class="replace-message" hidden>
+          <span id="replace-description"></span>
+          <button id="cancel-replace" class="text-button" type="button">Cancel replacement</button>
+        </div>
         <form id="upload-form" class="upload-layout">
           <div class="fields">
-            <label for="kind">Where should it appear?</label>
-            <select id="kind" required>
-              <option value="tattoo">Finished tattoo · main gallery</option>
-              <option value="design">Original drawing · design page</option>
-            </select>
+            <div id="upload-destination">
+              <label for="kind">Where should it appear?</label>
+              <select id="kind" required>
+                <option value="tattoo">Finished tattoo · main gallery</option>
+                <option value="design">Original drawing · design page</option>
+              </select>
 
-            <label for="category">Collection</label>
-            <select id="category" required></select>
+              <label for="category">Collection</label>
+              <select id="category" required></select>
+            </div>
 
             <label for="photo">Photograph</label>
             <input
@@ -104,7 +110,7 @@
               placeholder="e.g. Lily on the shoulder"
               required
             />
-            <p class="field-note">Tattoo titles do not appear on the gallery tiles.</p>
+            <p class="field-note">This title stays in the admin page and image viewer.</p>
 
             <label for="alt">Image description</label>
             <textarea
@@ -117,7 +123,7 @@
             <p class="field-note">This helps visitors using screen readers.</p>
 
             <button class="button publish-button" type="submit">
-              Publish photograph <span aria-hidden="true">↗</span>
+              Publish photograph <span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="../images/icons.svg#arrow-up-right"></use></svg></span>
             </button>
           </div>
           <div class="preview" id="preview">
@@ -131,28 +137,19 @@
         <div class="panel-heading">
           <div>
             <p class="step">03 / Library</p>
-            <h2 id="library-title">Website photos</h2>
+            <h2 id="library-title">Manage website photos</h2>
           </div>
           <span class="muted" id="photo-count"></span>
         </div>
         <p class="muted library-note">
-          See the artwork already published on the website. Photos added through
-          this page can also be removed here.
+          Each section matches a place on the website. Replace any photo, move
+          gallery work between collections, or remove and restore it here.
         </p>
-        <div class="library-group">
-          <div class="library-group-heading">
-            <h3>Already on the website</h3>
-            <span class="muted" id="existing-count"></span>
-          </div>
-          <div id="existing-list" class="existing-grid"></div>
-          <p class="muted" id="existing-warning" hidden></p>
-        </div>
-        <div class="library-group">
-          <div class="library-group-heading">
-            <h3>Added through this page</h3>
-            <span class="muted" id="added-count"></span>
-          </div>
-          <div id="library-list" class="library-list"></div>
+        <div id="catalog-groups"></div>
+        <div class="library-group" id="removed-group">
+          <div class="library-group-heading"><h3>Removed photos</h3><span class="muted" id="removed-count"></span></div>
+          <p class="muted">Removed photos stay here so you can restore them.</p>
+          <div id="removed-list" class="manage-grid"></div>
         </div>
       </section>
 

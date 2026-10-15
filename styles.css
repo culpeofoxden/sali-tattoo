@@ -102,6 +102,16 @@ button {
   background: var(--cream);
   transform: translateY(-160%);
 }
+.icon {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  vertical-align: -0.16em;
+  overflow: visible;
+}
+.icon-flower { width: 1.35em; height: 1.35em; }
+.gallery-empty { grid-column: 1 / -1; margin: 0; padding: 48px 20px; color: var(--muted); border: 1px solid var(--line); text-align: center; }
 .skip-link:focus {
   transform: translateY(0);
 }
@@ -380,7 +390,7 @@ button {
 }
 .hero-footnote-mark {
   color: var(--amber);
-  font-size: 30px;
+  font-size: 25px;
   line-height: 1;
 }
 .hero-visual {
@@ -530,6 +540,7 @@ button {
   font-weight: 400;
   vertical-align: middle;
 }
+.marquee-track .icon-flower { vertical-align: -0.34em; }
 @keyframes marquee {
   to {
     transform: translateX(-50%);
