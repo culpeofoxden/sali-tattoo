@@ -1661,13 +1661,15 @@ button {
   .booking-inner h2 .script {
     white-space: normal;
   }
-  .filter-list {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 6px;
+  .enhanced .filter-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex: 1 0 100%;
+    overflow: visible;
   }
   .filter-button {
-    flex: none;
+    width: 100%;
+    padding-inline: 10px;
   }
   .about-photos {
     min-height: 460px;
@@ -1722,16 +1724,6 @@ button {
   }
 }
 @media (max-width: 420px) {
-  .enhanced .filter-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    flex: 1 0 100%;
-    overflow: visible;
-  }
-  .filter-button {
-    width: 100%;
-    padding-inline: 10px;
-  }
   .hero h1 {
     font-size: 68px;
   }
