@@ -4,6 +4,8 @@
   "main": "index.js",
   "compatibility_date": "2026-10-02",
   "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true, "logs": { "enabled": true } },
   "kv_namespaces": [
     { "binding": "GALLERY", "id": "7dbb365a2b46426fa26091a446e4483d" }
   ],
