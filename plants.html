@@ -35,9 +35,9 @@
       rel="stylesheet"
     />
     <link rel="preload" as="image" href="images/design-fruit.jpg" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20261015-4" />
     <script src="photo-api-config.js" defer></script>
-    <script src="site.js" defer></script>
+    <script src="site.js?v=20261015-4" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -100,9 +100,8 @@
             >
           </div>
           <div class="category-hero-media">
-            <img
+            <img hidden
               data-photo-slot="design-hero-plants"
-              src="images/design-fruit.jpg"
               alt="Illustrated fruit tattoo design studies"
               width="2098"
               height="2970"
@@ -129,51 +128,7 @@
             </p>
           </div>
           <div class="category-gallery-grid">
-            <a
-              class="work-card"
-              href="images/design-florals.jpg"
-              data-lightbox
-              data-title="Floral compositions"
-              data-kind="Botanical studies"
-            >
-              <img
-                src="images/design-florals.jpg"
-                alt="Three detailed floral tattoo design compositions"
-                width="3508"
-                height="2480"
-                loading="lazy"
-              />
-            </a>
-            <a
-              class="work-card"
-              href="images/design-mushrooms.jpg"
-              data-lightbox
-              data-title="Mushroom studies"
-              data-kind="Botanical studies"
-            >
-              <img
-                src="images/design-mushrooms.jpg"
-                alt="Illustrated mushroom tattoo design studies"
-                width="2480"
-                height="3508"
-                loading="lazy"
-              />
-            </a>
-            <a
-              class="work-card"
-              href="images/design-floral-studies.jpg"
-              data-lightbox
-              data-title="Flowers in motion"
-              data-kind="Botanical studies"
-            >
-              <img
-                src="images/design-floral-studies.jpg"
-                alt="Three floral tattoo sketches including calla lilies"
-                width="3508"
-                height="2480"
-                loading="lazy"
-              />
-            </a>
+            <p class="gallery-empty">Loading gallery…</p>
           </div>
         </div>
       </section>
@@ -197,7 +152,7 @@
           <div class="category-other-links">
             <a class="text-link" href="animals.html"
               >Animals <span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="images/icons.svg#arrow-up-right"></use></svg></span></a
-            ><a class="text-link" href="other.html"
+            ><a class="text-link" href="other.html" hidden
               >Other <span aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="images/icons.svg#arrow-up-right"></use></svg></span></a
             >
           </div>

@@ -1,18 +1,28 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import api from "./index.js";
+import { readFileSync } from "node:fs";
+import api, { CatalogStore } from "./index.js";
 import baseCatalog from "../portfolio-catalog.json" with { type: "json" };
 
 const ORIGIN = "https://sali.tattoo";
 const PASSWORD = "an-example-password-for-tests";
-const PNG = Uint8Array.from(Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+tmx8AAAAASUVORK5CYII=",
-  "base64",
-));
+const PNG = new Uint8Array(readFileSync(new URL("../images/review-01.png", import.meta.url)));
+const JPEG = new Uint8Array(readFileSync(new URL("../images/gallery-01.jpg", import.meta.url)));
+
+function photoForm({ bytes = PNG, type = "image/png", kind = "design", category = "animals", replaceId, alt = "A small tattoo design" } = {}) {
+  const form = new FormData();
+  form.set("photo", new File([bytes], "artwork", { type }));
+  form.set("title", "New artwork");
+  form.set("alt", alt);
+  if (replaceId) form.set("replaceId", replaceId);
+  else { form.set("kind", kind); form.set("category", category); }
+  return form;
+}
 
 function environment() {
   const values = new Map();
+  const catalogValues = new Map();
   const gallery = {
     async list() {
       return {
@@ -35,12 +45,27 @@ function environment() {
     },
     async delete(key) { values.delete(key); },
   };
-  return {
+  const env = {
     ADMIN_PASSWORD: PASSWORD,
     GALLERY: gallery,
+    IMAGES: {
+      async info() { return { width: 1, height: 1, format: "png" }; },
+      input() { return { transform() { return { async output() { return {
+        response() { return new Response(PNG, { status: 200, headers: { "Content-Type": "image/png" } }); },
+      }; } }; } }; },
+    },
     LOGIN_LIMIT: { async limit() { return { success: true }; } },
     UPLOAD_LIMIT: { async limit() { return { success: true }; } },
   };
+  const object = new CatalogStore({ storage: {
+    async get(key) { return structuredClone(catalogValues.get(key)); },
+    async put(key, value) { catalogValues.set(key, structuredClone(value)); },
+  } }, env);
+  env.CATALOG = { getByName() { return object; } };
+  env._values = values;
+  env._catalogValues = catalogValues;
+  env._storage = object.ctx.storage;
+  return env;
 }
 
 function request(path, method = "GET", { body, password, origin = ORIGIN } = {}) {
@@ -99,6 +124,101 @@ test("password access, upload, duplicate rejection, and deletion", async (t) => 
   assert.equal((await restored.json()).item.status, "active");
 });
 
+test("restoring and moving cannot create duplicates, but reuse in another collection works", async () => {
+  const env = environment();
+  const upload = (category) => api.fetch(request("/photos", "POST", {
+    body: photoForm({ category }), password: PASSWORD,
+  }), env);
+  const first = (await (await upload("animals")).json()).item;
+  await api.fetch(request(`/photos/${first.id}`, "DELETE", { password: PASSWORD }), env);
+  const second = (await (await upload("animals")).json()).item;
+  assert.equal((await api.fetch(request(`/photos/${first.id}/restore`, "POST", { password: PASSWORD }), env)).status, 409);
+  assert.equal((await upload("plants")).status, 201);
+  const plants = (await (await api.fetch(request("/catalog"), env)).json()).items
+    .find((item) => item.kind === "design" && item.category === "plants" && item.sha256);
+  assert.equal((await api.fetch(request(`/photos/${plants.id}`, "PATCH", {
+    body: JSON.stringify({ title: "Moved", alt: "The same small tattoo design", category: "animals" }),
+    password: PASSWORD,
+  }), env)).status, 409);
+  assert.equal((await api.fetch(request(`/photos/${second.id}`, "DELETE", { password: PASSWORD }), env)).status, 200);
+  assert.equal((await api.fetch(request("/categories/design/animals/restore", "POST", { password: PASSWORD }), env)).status, 409);
+  assert.equal((await upload("other")).status, 201);
+});
+
+test("rejects truncated images and unreadable images", async () => {
+  const env = environment();
+  const truncated = photoForm({ bytes: PNG.slice(0, 8) });
+  assert.equal((await api.fetch(request("/photos", "POST", { body: truncated, password: PASSWORD }), env)).status, 400);
+  env.IMAGES.info = async () => { throw new Error("Cannot decode"); };
+  const unreadable = await api.fetch(request("/photos", "POST", {
+    body: photoForm(), password: PASSWORD,
+  }), env);
+  assert.equal(unreadable.status, 400);
+  assert.equal(env._values.size, 0);
+});
+
+test("new photos append after the last position, and replacements discard old blobs", async () => {
+  const env = environment();
+  const originalMax = Math.max(...baseCatalog.items
+    .filter((item) => item.kind === "tattoo" && item.category === "botanical")
+    .map((item) => item.position));
+  const created = await api.fetch(request("/photos", "POST", {
+    body: photoForm({ kind: "tattoo", category: "botanical" }), password: PASSWORD,
+  }), env);
+  assert.equal(created.status, 201);
+  const first = (await created.json()).item;
+  assert.equal(first.position, originalMax + 1);
+  const oldBlob = first.path.split("/").at(-2);
+  const replaced = await api.fetch(request("/photos", "POST", {
+    body: photoForm({ bytes: JPEG, type: "image/jpeg", replaceId: first.id }), password: PASSWORD,
+  }), env);
+  assert.equal(replaced.status, 200);
+  assert.equal(env._values.has(`photo:${oldBlob}`), false);
+  assert.equal(env._values.size, 1);
+});
+
+test("simultaneous edits are serialized and a failed catalog save cleans the new blob", async () => {
+  const env = environment();
+  const upload = () => api.fetch(request("/photos", "POST", {
+    body: photoForm(), password: PASSWORD,
+  }), env);
+  const results = await Promise.all([upload(), upload()]);
+  assert.deepEqual(results.map((result) => result.status).sort(), [201, 409]);
+  const active = (await (await api.fetch(request("/catalog"), env)).json()).items
+    .filter((item) => item.sha256);
+  assert.equal(active.length, 1);
+  const originalPut = env._storage.put;
+  env._storage.put = async () => { throw new Error("Storage failed"); };
+  const failed = await api.fetch(request("/photos", "POST", {
+    body: photoForm({ bytes: JPEG, type: "image/jpeg", category: "plants" }),
+    password: PASSWORD,
+  }), env);
+  assert.equal(failed.status, 500);
+  assert.equal(env._values.size, 1);
+  env._storage.put = originalPut;
+});
+
+test("migration preserves the live KV catalog and repairs placeholder descriptions", async () => {
+  const env = environment();
+  const live = structuredClone(baseCatalog);
+  live.items.push({ id: "43e146cb-2749-44ae-8c61-e7506a5c3779", kind: "design", category: "animals",
+    title: "Cats", alt: "...", path: "https://sali-photo-api.example.workers.dev/photos/43e146cb-2749-44ae-8c61-e7506a5c3779/image",
+    status: "active", position: 4 });
+  env._values.set("catalog:v2", { text: JSON.stringify(live) });
+  const response = await api.fetch(request("/catalog"), env);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).items.find((item) => item.title === "Cats").alt,
+    "Black and white sketches of winged kittens in different poses");
+  assert.equal(env._catalogValues.get("catalog:v2").items.length, live.items.length);
+  const wave = { id: "de0d8793-af9e-43c5-90df-eadd08883b65", kind: "tattoo", category: "concepts",
+    title: "wave", alt: "...", path: "https://sali-photo-api.example.workers.dev/photos/de0d8793-af9e-43c5-90df-eadd08883b65/image",
+    status: "active", position: 20 };
+  env._catalogValues.get("catalog:v2").items.push(wave);
+  const repaired = await api.fetch(request("/catalog"), env);
+  assert.equal((await repaired.json()).items.find((item) => item.id === wave.id).alt,
+    "Fine line ocean wave and mountain tattoo on an arm");
+});
+
 test("removed images can be uploaded again and active images can be used in other collections", async (t) => {
   t.mock.method(globalThis, "fetch", async (url) =>
     new Response(JSON.stringify(String(url).endsWith("portfolio-catalog.json") ? baseCatalog : { known: [] }), { status: 200 }));
@@ -133,11 +253,10 @@ test("removed images can be uploaded again and active images can be used in othe
 test("original artwork blocks only its active destination collection", async (t) => {
   const hash = createHash("sha256").update(PNG).digest("hex");
   const original = baseCatalog.items[0];
-  t.mock.method(globalThis, "fetch", async (url) => new Response(JSON.stringify(
-    String(url).endsWith("portfolio-catalog.json") ? baseCatalog :
-      { known: [{ path: original.path, sha256: hash }] },
-  ), { status: 200 }));
   const env = environment();
+  const seeded = structuredClone(baseCatalog);
+  seeded.items[0].sha256 = hash;
+  env._catalogValues.set("catalog:v2", seeded);
   const upload = (category) => {
     const form = new FormData();
     form.set("photo", new File([PNG], "original.png", { type: "image/png" }));

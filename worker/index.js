@@ -1,3 +1,6 @@
+import baseCatalog from "../portfolio-catalog.json" with { type: "json" };
+import originalUploads from "../portfolio-uploads.json" with { type: "json" };
+
 const SITE_ORIGIN = "https://sali.tattoo";
 const CATALOG_KEY = "catalog:v2";
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -11,6 +14,28 @@ const MIME_EXTENSIONS = {
   "image/png": "png",
   "image/webp": "webp",
 };
+const ORIGINAL_HASH_BY_PATH = new Map(originalUploads.known.map(({ path, sha256 }) => [path, sha256]));
+const LEGACY_ALT_CORRECTIONS = {
+  "43e146cb-2749-44ae-8c61-e7506a5c3779": "Black and white sketches of winged kittens in different poses",
+  "b6cc2536-6120-4322-898c-9ac5eed2dcbd": "Flowing fine line flower tattoo across an upper back",
+  "16de5363-1a31-4ff7-a981-af680c17c9d8": "Pink orchid tattoo with delicate black linework on an upper arm",
+  "885d73ef-8885-4215-955f-1e9ca115abc3": "Small fine line seahorse tattoo with bubbles on an arm",
+  "8d4eec6b-2ca0-4236-be40-2263bb143903": "Continuous line tattoo of two faces on an arm",
+  "adcc1216-4d66-465d-9b2a-dc1ba22ff6d0": "Butterfly and ornamental linework tattoo on an upper arm",
+  "cdb543c8-5eae-4fb9-a62b-a7af003fe90b": "Cat and meditating frog tattoo design studies with colourful flowing lines",
+  "d1a38919-7bdd-4023-a0da-14fbfe24dd5a": "Fine line animal tattoo on a woman's upper arm",
+  "de0d8793-af9e-43c5-90df-eadd08883b65": "Fine line ocean wave and mountain tattoo on an arm",
+};
+
+function repairLegacyDescriptions(catalog) {
+  let changed = false;
+  const items = catalog.items.map((item) => {
+    if (item.alt !== "..." || !LEGACY_ALT_CORRECTIONS[item.id]) return item;
+    changed = true;
+    return { ...item, alt: LEGACY_ALT_CORRECTIONS[item.id] };
+  });
+  return changed ? { ...catalog, items } : catalog;
+}
 
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
@@ -46,15 +71,73 @@ async function matchesPassword(candidate, actual) {
   return difference === 0;
 }
 
-function imageType(bytes) {
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
-    return "image/jpeg";
-  if (bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => bytes[i] === byte))
-    return "image/png";
-  if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-      String.fromCharCode(...bytes.slice(8, 12)) === "WEBP")
-    return "image/webp";
+export function imageType(bytes) {
+  if (bytes.length >= 32 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff &&
+      bytes[bytes.length - 2] === 0xff && bytes[bytes.length - 1] === 0xd9) {
+    let offset = 2;
+    let dimensions = false;
+    let scan = false;
+    while (offset + 4 <= bytes.length - 2) {
+      if (bytes[offset] !== 0xff) return null;
+      while (bytes[offset] === 0xff) offset++;
+      const marker = bytes[offset++];
+      if (marker === 0xd9) break;
+      if (marker === 0xda) { scan = dimensions && offset + 2 < bytes.length - 2; break; }
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue;
+      if (offset + 2 > bytes.length) return null;
+      const length = (bytes[offset] << 8) | bytes[offset + 1];
+      if (length < 2 || offset + length > bytes.length - 2) return null;
+      if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marker)) {
+        if (length < 7) return null;
+        const height = (bytes[offset + 3] << 8) | bytes[offset + 4];
+        const width = (bytes[offset + 5] << 8) | bytes[offset + 6];
+        dimensions = validDimensions(width, height);
+      }
+      offset += length;
+    }
+    if (scan) return "image/jpeg";
+  }
+  if (bytes.length >= 45 && [137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => bytes[i] === byte)) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let offset = 8, header = false, data = false, end = false;
+    while (offset + 12 <= bytes.length) {
+      const length = view.getUint32(offset);
+      if (length > bytes.length - offset - 12) return null;
+      const type = String.fromCharCode(...bytes.slice(offset + 4, offset + 8));
+      if (type === "IHDR") {
+        if (offset !== 8 || length !== 13 || !validDimensions(view.getUint32(offset + 8), view.getUint32(offset + 12))) return null;
+        header = true;
+      }
+      if (type === "IDAT") data = data || length > 0;
+      offset += length + 12;
+      if (type === "IEND") { end = length === 0 && offset === bytes.length; break; }
+    }
+    if (header && data && end) return "image/png";
+  }
+  if (bytes.length >= 30 && String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+      String.fromCharCode(...bytes.slice(8, 12)) === "WEBP") {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (view.getUint32(4, true) !== bytes.length - 8) return null;
+    const chunk = String.fromCharCode(...bytes.slice(12, 16));
+    const size = view.getUint32(16, true);
+    if (size < 10 || size + 20 > bytes.length) return null;
+    if (chunk === "VP8X" && size >= 10) {
+      const width = 1 + bytes[24] + (bytes[25] << 8) + (bytes[26] << 16);
+      const height = 1 + bytes[27] + (bytes[28] << 8) + (bytes[29] << 16);
+      if (validDimensions(width, height)) return "image/webp";
+    }
+    if (chunk === "VP8L" && bytes[20] === 0x2f) return "image/webp";
+    if (chunk === "VP8 " && bytes[23] === 0x9d && bytes[24] === 0x01 && bytes[25] === 0x2a) return "image/webp";
+  }
   return null;
+}
+
+function validDimensions(width, height) {
+  return width > 0 && height > 0 && width <= 16000 && height <= 16000 && width * height <= 100_000_000;
+}
+
+function validDescription(value) {
+  return typeof value === "string" && value.trim().length >= 8 && value.length <= 180 && /[\p{L}]{3,}/u.test(value);
 }
 
 async function allItems(store, origin) {
@@ -79,28 +162,29 @@ async function rateLimit(binding, key) {
   return result.success;
 }
 
-async function originalPathsForHash(sha256) {
-  const response = await fetch(`${SITE_ORIGIN}/portfolio-uploads.json`);
-  if (!response.ok) throw new Error("The published photo catalog is unavailable.");
-  const manifest = await response.json();
-  return new Set((manifest.known || [])
-    .filter((item) => item.sha256 === sha256)
-    .map((item) => item.path));
-}
+function itemHash(item) { return item.sha256 || ORIGINAL_HASH_BY_PATH.get(item.path); }
 
-async function duplicateInDestination(catalog, sha256, kind, category, replaceId) {
-  const originalPaths = await originalPathsForHash(sha256);
+function duplicateInDestination(catalog, sha256, kind, category, replaceId) {
+  if (!sha256) return false;
   return catalog.items.some((item) => item.status === "active" && item.id !== replaceId &&
     item.kind === kind && item.category === category &&
-    (item.sha256 === sha256 || originalPaths.has(item.path)));
+    itemHash(item) === sha256);
 }
 
 async function readCatalog(env, origin) {
+  const stored = env.CATALOG_STORAGE && await env.CATALOG_STORAGE.get(CATALOG_KEY);
+  if (stored?.version === 2 && Array.isArray(stored.items)) {
+    const catalog = repairLegacyDescriptions(stored);
+    if (catalog !== stored) await env.CATALOG_STORAGE.put(CATALOG_KEY, catalog);
+    return catalog;
+  }
   const saved = await env.GALLERY.get(CATALOG_KEY, { type: "json" });
-  if (saved?.version === 2 && Array.isArray(saved.items)) return saved;
-  const response = await fetch(`${SITE_ORIGIN}/portfolio-catalog.json`, { cache: "no-store" });
-  if (!response.ok) throw new Error("The original portfolio catalog is unavailable.");
-  const base = await response.json();
+  if (saved?.version === 2 && Array.isArray(saved.items)) {
+    const catalog = repairLegacyDescriptions(saved);
+    if (env.CATALOG_STORAGE) await env.CATALOG_STORAGE.put(CATALOG_KEY, catalog);
+    return catalog;
+  }
+  const base = baseCatalog;
   if (base.version !== 2 || !Array.isArray(base.items)) throw new Error("Invalid portfolio catalog.");
   const legacy = await allItems(env.GALLERY, origin);
   const knownIds = new Set(base.items.map((item) => item.id));
@@ -113,11 +197,14 @@ async function readCatalog(env, origin) {
       position: items.filter((entry) => entry.kind === item.kind && entry.category === item.category).length,
     });
   }
-  return { version: 2, items };
+  const catalog = { version: 2, items };
+  if (env.CATALOG_STORAGE) await env.CATALOG_STORAGE.put(CATALOG_KEY, catalog);
+  return catalog;
 }
 
 async function saveCatalog(env, catalog) {
-  await env.GALLERY.put(CATALOG_KEY, JSON.stringify(catalog));
+  if (env.CATALOG_STORAGE) await env.CATALOG_STORAGE.put(CATALOG_KEY, catalog);
+  else await env.GALLERY.put(CATALOG_KEY, JSON.stringify(catalog));
 }
 
 function publicItems(catalog) {
@@ -132,6 +219,25 @@ function catalogItem(catalog, id) {
   return catalog.items.find((item) => item.id === id);
 }
 
+function nextPosition(catalog, kind, category, excludeId) {
+  return 1 + Math.max(-1, ...catalog.items
+    .filter((item) => item.id !== excludeId && item.kind === kind && item.category === category)
+    .map((item) => Number.isInteger(item.position) ? item.position : -1));
+}
+
+function blobId(path, origin) {
+  const match = new RegExp(`^${origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}/photos/([a-f0-9-]{36})/image$`).exec(path || "");
+  return match?.[1];
+}
+
+async function deleteUnreferencedBlob(env, catalog, path, origin) {
+  const id = blobId(path, origin);
+  if (id && !catalog.items.some((item) => item.path === path)) {
+    try { await env.GALLERY.delete(`photo:${id}`); }
+    catch (cause) { console.error("Could not remove old image blob", cause); }
+  }
+}
+
 async function handle(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -142,6 +248,12 @@ async function handle(request, env) {
     if (request.headers.get("Origin") !== SITE_ORIGIN) return error("Origin is not allowed.", 403);
     return new Response(null, { status: 204 });
   }
+  if (env.CATALOG && !env.CATALOG_STORAGE &&
+      (path === "/gallery" || path === "/catalog" || path === "/admin/catalog" ||
+       path === "/photos" || /^\/photos\/[a-z0-9-]+(?:\/restore)?$/.test(path) ||
+       /^\/categories\//.test(path))) {
+    return env.CATALOG.getByName("primary").fetch(request);
+  }
   if (method === "GET" && path === "/gallery") {
     const catalog = await readCatalog(env, url.origin);
     return json({ items: publicItems(catalog).filter((item) =>
@@ -151,12 +263,12 @@ async function handle(request, env) {
     return json({ items: publicItems(await readCatalog(env, url.origin)) });
   }
   const imageMatch = /^\/photos\/([a-f0-9-]{36})\/image$/.exec(path);
-  if (method === "GET" && imageMatch) {
+  if ((method === "GET" || method === "HEAD") && imageMatch) {
     const item = await env.GALLERY.get(`photo:${imageMatch[1]}`, { type: "arrayBuffer" });
     if (!item) return error("Photograph not found.", 404);
     const type = imageType(new Uint8Array(item));
     if (!type) return error("Photograph is unavailable.", 500);
-    return new Response(item, {
+    return new Response(method === "HEAD" ? null : item, {
       headers: {
         "Content-Type": type,
         "Cache-Control": "public, max-age=300",
@@ -208,18 +320,29 @@ async function handle(request, env) {
     const replacing = replaceId ? catalogItem(catalog, replaceId) : null;
     if (replaceId && !replacing) return error("Photograph not found.", 404);
     if (!replacing && !validCategory(kind, category)) return error("Choose a valid collection.", 400);
-    if (typeof title !== "string" || !title.trim() || title.length > 80 ||
-        typeof alt !== "string" || !alt.trim() || alt.length > 180)
+    if (typeof title !== "string" || !title.trim() || title.length > 80 || !validDescription(alt))
       return error("Add a short title and image description.", 400);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const type = imageType(bytes);
     if (!type || type !== file.type || !MIME_EXTENSIONS[type])
       return error("The file is not a valid JPEG, PNG or WebP image.", 400);
+    try {
+      const info = await env.IMAGES.info(new Blob([bytes], { type }).stream());
+      if (!validDimensions(info.width, info.height))
+        return error("The image dimensions are unsupported.", 400);
+      const decoded = (await env.IMAGES.input(new Blob([bytes], { type }).stream())
+        .transform({ width: 1 }).output({ format: "image/png" })).response();
+      if (!decoded.ok) return error("The image could not be decoded. Export it again and retry.", 400);
+      await decoded.arrayBuffer();
+    } catch (cause) {
+      console.error("Image decoding failed", cause);
+      return error("The image could not be decoded. Export it again and retry.", 400);
+    }
     const digest = await crypto.subtle.digest("SHA-256", bytes);
     const sha256 = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
     const destinationKind = replacing ? replacing.kind : kind;
     const destinationCategory = replacing ? replacing.category : category;
-    if (await duplicateInDestination(catalog, sha256, destinationKind, destinationCategory, replaceId))
+    if (duplicateInDestination(catalog, sha256, destinationKind, destinationCategory, replaceId))
       return error("This image is already in this collection.", 409);
     const imageId = crypto.randomUUID();
     const imagePath = `${url.origin}/photos/${imageId}/image`;
@@ -229,12 +352,19 @@ async function handle(request, env) {
     } : {
       id: imageId, kind, category, title: title.trim(), alt: alt.trim(), sha256,
       type, path: imagePath, addedAt: new Date().toISOString(), status: "active",
-      position: catalog.items.filter((entry) => entry.kind === kind && entry.category === category).length,
+      position: nextPosition(catalog, kind, category),
     };
     await env.GALLERY.put(`photo:${imageId}`, bytes.buffer, { metadata: item });
+    const oldPath = replacing?.path;
     if (replacing) catalog.items[catalog.items.indexOf(replacing)] = item;
     else catalog.items.push(item);
-    await saveCatalog(env, catalog);
+    try { await saveCatalog(env, catalog); }
+    catch (cause) {
+      try { await env.GALLERY.delete(`photo:${imageId}`); }
+      catch (cleanupCause) { console.error("Could not remove failed upload", cleanupCause); }
+      throw cause;
+    }
+    if (oldPath) await deleteUnreferencedBlob(env, catalog, oldPath, url.origin);
     return json({ item }, replacing ? 200 : 201);
   }
   const restoreMatch = /^\/photos\/([a-z0-9-]+)\/restore$/.exec(path);
@@ -242,6 +372,8 @@ async function handle(request, env) {
     const catalog = await readCatalog(env, url.origin);
     const item = catalogItem(catalog, restoreMatch[1]);
     if (!item) return error("Photograph not found.", 404);
+    if (item.status === "removed" && duplicateInDestination(catalog, itemHash(item), item.kind, item.category, item.id))
+      return error("This image is already in this collection.", 409);
     item.status = "active";
     item.removedAt = null;
     await saveCatalog(env, catalog);
@@ -262,6 +394,15 @@ async function handle(request, env) {
     const [, kind, category, action] = categoryMatch;
     if (!validCategory(kind, category)) return error("Choose a valid collection.", 400);
     const catalog = await readCatalog(env, url.origin);
+    if (action === "restore") {
+      const restoringHashes = new Set();
+      for (const item of catalog.items.filter((entry) => entry.kind === kind && entry.category === category && entry.status === "removed")) {
+        const hash = itemHash(item);
+        if (duplicateInDestination(catalog, hash, kind, category, item.id) || (hash && restoringHashes.has(hash)))
+          return error("This collection contains a photo that is already in use. Restore photos individually.", 409);
+        if (hash) restoringHashes.add(hash);
+      }
+    }
     let changed = 0;
     for (const item of catalog.items) {
       const belongs = item.category === category && item.kind === kind;
@@ -283,10 +424,12 @@ async function handle(request, env) {
     const nextCategory = submitted.category || item.category;
     if (!validCategory(item.kind, nextCategory)) return error("Choose a valid collection.", 400);
     if (typeof submitted.title !== "string" || !submitted.title.trim() || submitted.title.length > 80 ||
-        typeof submitted.alt !== "string" || !submitted.alt.trim() || submitted.alt.length > 180)
+        !validDescription(submitted.alt))
       return error("Add a short title and image description.", 400);
     if (nextCategory !== item.category) {
-      item.position = catalog.items.filter((entry) => entry.kind === item.kind && entry.category === nextCategory).length;
+      if (item.status === "active" && duplicateInDestination(catalog, itemHash(item), item.kind, nextCategory, item.id))
+        return error("This image is already in this collection.", 409);
+      item.position = nextPosition(catalog, item.kind, nextCategory, item.id);
       item.category = nextCategory;
     }
     item.title = submitted.title.trim();
@@ -295,6 +438,25 @@ async function handle(request, env) {
     return json({ item });
   }
   return error("Not found.", 404);
+}
+
+// Every catalog request for this site runs through one object. The queue keeps
+// read/modify/write operations ordered even while KV image writes are in flight.
+export class CatalogStore {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+    this.pending = Promise.resolve();
+  }
+
+  fetch(request) {
+    const work = this.pending.then(() => handle(request, {
+      ...this.env,
+      CATALOG_STORAGE: this.ctx.storage,
+    }));
+    this.pending = work.catch(() => {});
+    return work;
+  }
 }
 
 export default {

@@ -110,6 +110,8 @@ function resetReplacement() {
   fileInput.dispatchEvent(new Event("change"));
 }
 function replace(item) {
+  fileInput.value = "";
+  fileInput.dispatchEvent(new Event("change"));
   replacementId = item.id;
   $("#replace-message").hidden = false;
   $("#replace-description").textContent = `Replacing “${item.title}”. The new photo will take its place on the website.`;
@@ -129,6 +131,10 @@ uploadForm.addEventListener("submit", async (event) => {
     status("Choose a JPEG, PNG or WebP image.", true); return;
   }
   if (file.size > MAX_BYTES) { status("This file is over 8 MB. Export a smaller copy first.", true); return; }
+  const description = $("#alt").value.trim();
+  if (description.length < 8 || !/[\p{L}]{3,}/u.test(description)) {
+    status("Describe what is shown in the image (at least 8 characters).", true); return;
+  }
   if (!replacementId && !CATEGORIES[kindInput.value]?.some(([value]) => value === categoryInput.value)) {
     status("Choose a valid collection.", true); return;
   }
@@ -138,13 +144,11 @@ uploadForm.addEventListener("submit", async (event) => {
     const form = new FormData();
     form.set("photo", file);
     form.set("title", $("#title").value.trim());
-    form.set("alt", $("#alt").value.trim());
+    form.set("alt", description);
     if (replacementId) form.set("replaceId", replacementId);
     else { form.set("kind", kindInput.value); form.set("category", categoryInput.value); }
-    const result = await api("/photos", { method: "POST", body: form });
-    const index = catalog.items.findIndex((item) => item.id === result.item.id);
-    if (index >= 0) catalog.items[index] = result.item;
-    else catalog.items.push(result.item);
+    await api("/photos", { method: "POST", body: form });
+    catalog = await api("/admin/catalog");
     resetReplacement();
     renderCatalog();
     status("Saved. The website will update shortly.");
@@ -164,9 +168,8 @@ function button(label, action, className = "card-button") {
   node.addEventListener("click", action);
   return node;
 }
-function updateItem(next) {
-  const index = catalog.items.findIndex((item) => item.id === next.id);
-  if (index >= 0) catalog.items[index] = next;
+async function refreshCatalog() {
+  catalog = await api("/admin/catalog");
   renderCatalog();
 }
 async function remove(item) {
@@ -174,15 +177,15 @@ async function remove(item) {
   status("Removing photo…");
   try {
     await api(`/photos/${encodeURIComponent(item.id)}`, { method: "DELETE" });
-    updateItem({ ...item, status: "removed" });
+    await refreshCatalog();
     status("Removed. The website will update shortly.");
   } catch (error) { status(error.message, true); }
 }
 async function restore(item) {
   status("Restoring photo…");
   try {
-    const result = await api(`/photos/${encodeURIComponent(item.id)}/restore`, { method: "POST" });
-    updateItem(result.item);
+    await api(`/photos/${encodeURIComponent(item.id)}/restore`, { method: "POST" });
+    await refreshCatalog();
     status("Restored. The website will update shortly.");
   } catch (error) { status(error.message, true); }
 }
@@ -203,12 +206,16 @@ function edit(item, host) {
   form.append(title, alt, category, save, button("Cancel", () => form.remove()));
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (alt.value.trim().length < 8 || !/[\p{L}]{3,}/u.test(alt.value)) {
+      status("Describe what is shown in the image (at least 8 characters).", true);
+      return;
+    }
     busy(form, true);
     try {
-      const result = await api(`/photos/${encodeURIComponent(item.id)}`, {
+      await api(`/photos/${encodeURIComponent(item.id)}`, {
         method: "PATCH", body: { title: title.value.trim(), alt: alt.value.trim(), category: category.value },
       });
-      updateItem(result.item);
+      await refreshCatalog();
       status("Details saved.");
     } catch (error) { status(error.message, true); busy(form, false); }
   });
@@ -254,11 +261,7 @@ function group(title, items, { kind, category } = {}) {
       if (active && !confirm(`Remove every photo in ${title}? You can restore the collection later.`)) return;
       try {
         await api(`/categories/${kind}/${category}/${action}`, { method: "POST" });
-        catalog.items.forEach((item) => {
-          if (item.category === category && item.kind === kind)
-            item.status = active ? "removed" : "active";
-        });
-        renderCatalog();
+        await refreshCatalog();
         status(active ? "Collection cleared." : "Collection restored.");
       } catch (error) { status(error.message, true); }
     }, "card-button subtle"));

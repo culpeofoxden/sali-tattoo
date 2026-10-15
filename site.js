@@ -182,8 +182,8 @@ if (
   });
 }
 
-// The photo API is the shared source for desktop and mobile. The original HTML
-// remains a fallback if the API and local catalog are temporarily unavailable.
+// The live catalog is the only source of visible portfolio images. Showing the
+// original markup after an API outage would resurrect photos removed by Vita.
 const apiRoot = window.SALI_PHOTO_API || "";
 const validLocalPath = /^images\/[a-z0-9-]+\.(?:jpg|jpeg|png|webp)$/i;
 const validApiPath = (path) =>
@@ -193,15 +193,13 @@ function safeImagePath(path) {
   return typeof path === "string" && (validLocalPath.test(path) || validApiPath(path));
 }
 async function loadCatalog() {
-  for (const url of [apiRoot && `${apiRoot}/catalog`, "portfolio-catalog.json"].filter(Boolean)) {
-    try {
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) continue;
-      const catalog = await response.json();
-      if (Array.isArray(catalog.items)) return catalog.items;
-    } catch { /* Try the next source. */ }
-  }
-  return null;
+  if (!apiRoot) return null;
+  try {
+    const response = await fetch(`${apiRoot}/catalog`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const catalog = await response.json();
+    return Array.isArray(catalog.items) ? catalog.items : null;
+  } catch { return null; }
 }
 function renderCatalog(items) {
   const active = items.filter((item) => item?.status === "active" && safeImagePath(item.path));
@@ -209,7 +207,7 @@ function renderCatalog(items) {
   document.querySelectorAll("img[data-photo-slot]").forEach((image) => {
     const item = byId.get(image.dataset.photoSlot);
     image.hidden = !item;
-    const figure = image.closest(".hero-mobile-image, .hero-main-image, .hero-accent-image");
+    const figure = image.closest(".hero-mobile-image, .hero-main-image, .hero-accent-image, .category-hero-media");
     if (figure) figure.hidden = !item;
     if (!item) {
       image.removeAttribute("src");
@@ -219,6 +217,15 @@ function renderCatalog(items) {
     image.alt = String(item.alt || item.title || "Artwork by Vita");
     if (Number.isInteger(item.width) && item.width > 0) image.width = item.width;
     if (Number.isInteger(item.height) && item.height > 0) image.height = item.height;
+  });
+
+  document.querySelectorAll(".design-card").forEach((card) => {
+    const category = card.getAttribute("href")?.replace(/\.html$/, "");
+    card.hidden = !active.some((item) => item.kind === "design" && item.category === category) ||
+      !byId.has(`design-cover-${category}`);
+  });
+  document.querySelectorAll('a[href="other.html"]:not(.design-card)').forEach((link) => {
+    link.hidden = !active.some((item) => item.kind === "design" && item.category === "other");
   });
 
   const target = document.querySelector(".work-grid, .category-gallery-grid");
@@ -261,4 +268,20 @@ function renderCatalog(items) {
   }
   updateGalleryEmpty(target);
 }
-loadCatalog().then((items) => { if (items) renderCatalog(items); });
+loadCatalog().then((items) => {
+  if (items) { renderCatalog(items); return; }
+  document.querySelectorAll("img[data-photo-slot]").forEach((image) => {
+    image.hidden = true;
+    image.removeAttribute("src");
+    const figure = image.closest(".hero-mobile-image, .hero-main-image, .hero-accent-image, .category-hero-media");
+    if (figure) figure.hidden = true;
+  });
+  document.querySelectorAll(".design-card").forEach((card) => { card.hidden = true; });
+  const target = document.querySelector(".work-grid, .category-gallery-grid");
+  if (target) {
+    const message = document.createElement("p");
+    message.className = "gallery-empty";
+    message.textContent = "The gallery is temporarily unavailable. Please try again shortly.";
+    target.replaceChildren(message);
+  }
+});
