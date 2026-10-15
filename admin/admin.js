@@ -248,14 +248,14 @@ function group(title, items, { kind, category } = {}) {
       $("#upload-panel").scrollIntoView({ behavior: "smooth", block: "start" }); fileInput.focus();
     }));
     const active = catalog.items.some((item) => item.category === category &&
-      (item.kind === kind || (kind === "design" && item.kind === "slot")) && item.status === "active");
+      item.kind === kind && item.status === "active");
     actions.append(button(active ? "Clear collection" : "Restore collection", async () => {
       const action = active ? "clear" : "restore";
       if (active && !confirm(`Remove every photo in ${title}? You can restore the collection later.`)) return;
       try {
         await api(`/categories/${kind}/${category}/${action}`, { method: "POST" });
         catalog.items.forEach((item) => {
-          if (item.category === category && (item.kind === kind || (kind === "design" && item.kind === "slot")))
+          if (item.category === category && item.kind === kind)
             item.status = active ? "removed" : "active";
         });
         renderCatalog();

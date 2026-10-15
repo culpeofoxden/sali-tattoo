@@ -174,6 +174,28 @@ test("rejects other origins, unauthenticated uploads, and disguised files", asyn
   assert.equal((await api.fetch(request("/photos", "POST", { body: form, password: PASSWORD }), env)).status, 400);
 });
 
+test("limits password attempts without blocking signed-in photo edits", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url) =>
+    new Response(JSON.stringify(String(url).endsWith("portfolio-catalog.json") ? baseCatalog : { known: [] }), { status: 200 }));
+  const env = environment();
+  let attempts = 0;
+  env.LOGIN_LIMIT = { async limit() { return { success: ++attempts <= 2 }; } };
+  const login = await api.fetch(request("/login", "POST", {
+    body: JSON.stringify({ password: PASSWORD }),
+  }), env);
+  assert.equal(login.status, 200);
+  for (let i = 0; i < 3; i += 1) {
+    const edited = await api.fetch(request("/photos/tattoo-gallery-09", "PATCH", {
+      body: JSON.stringify({ title: `Dragon ${i}`, alt: "Dragon tattoo", category: "creatures" }),
+      password: PASSWORD,
+    }), env);
+    assert.equal(edited.status, 200);
+  }
+  assert.equal(attempts, 1);
+  assert.equal((await api.fetch(request("/admin/catalog", "GET", { password: "wrong" }), env)).status, 401);
+  assert.equal((await api.fetch(request("/admin/catalog", "GET", { password: "wrong" }), env)).status, 429);
+});
+
 test("replaces original slots, edits categories, and clears collections", async (t) => {
   t.mock.method(globalThis, "fetch", async (url) =>
     new Response(JSON.stringify(String(url).endsWith("portfolio-catalog.json") ? baseCatalog : { known: [] }), { status: 200 }));
@@ -199,5 +221,8 @@ test("replaces original slots, edits categories, and clears collections", async 
   assert.equal(cleared.status, 200);
   assert.ok((await cleared.json()).changed > 0);
   const after = await api.fetch(request("/catalog"), env);
-  assert.equal((await after.json()).items.some((item) => item.kind === "design" && item.category === "animals"), false);
+  const activeItems = (await after.json()).items;
+  assert.equal(activeItems.some((item) => item.kind === "design" && item.category === "animals"), false);
+  assert.ok(activeItems.some((item) => item.id === "design-cover-animals"));
+  assert.ok(activeItems.some((item) => item.id === "design-hero-animals"));
 });

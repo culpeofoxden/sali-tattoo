@@ -27,6 +27,7 @@ The tattoo portfolio and design pages open full-size images with JavaScript and 
 ## Updating content
 
 - Open `https://sali.tattoo/admin/`. Vita signs in with the studio password and can add, replace, remove, restore or recategorize portfolio images. The two first-screen photos, two artist photos and all sketchbook covers are independent slots. The password stays in browser memory for that tab and is sent only over HTTPS to the photo API.
+- Clearing a gallery collection affects its artwork only; sketchbook card and page covers are managed separately in their slot groups.
 - The admin page accepts JPEG, PNG and WebP up to 8 MB per file. The same image can be uploaded after removal or used in another collection; only an active exact duplicate in the destination collection is rejected. Check visually for alternate crops or edits of an existing tattoo before publishing.
 - The API imports the original catalog from `portfolio-catalog.json` on first use and stores changes in Cloudflare KV. The public site uses that shared catalog on desktop and mobile, so no GitHub account or token is needed for routine photo changes. The original HTML images remain a fallback during an API outage.
 - If adding original artwork manually, add it to `images/`, update `portfolio-catalog.json` and its hashes in `portfolio-uploads.json`, and keep fallback HTML in sync.
@@ -44,4 +45,4 @@ The Worker is deployed at `https://sali-photo-api.beher-dan.workers.dev`; its KV
 
 For future API changes, deploy `worker/index.js` to the existing Worker and keep the bindings in `worker/wrangler.jsonc`. The Worker uses `portfolio-uploads.json` to recognize original image files when checking for active duplicates in the destination collection.
 
-Cloudflare KV changes can take up to about a minute to appear globally. The admin page shows a successful upload immediately. The Worker uses a per-location login limit and a separate upload limit. Images have an 8 MB limit; Workers KV has a 1 GB free storage allowance and a 25 MiB per-item limit. Run `node --test worker/test.mjs` to check the API locally.
+Cloudflare KV changes can take up to about a minute to appear globally. The admin page shows a successful upload immediately. The Worker limits login and invalid-password attempts separately from authorized photo edits, and also limits uploads. Images have an 8 MB limit; Workers KV has a 1 GB free storage allowance and a 25 MiB per-item limit. Run `node --test worker/test.mjs` to check the API locally.

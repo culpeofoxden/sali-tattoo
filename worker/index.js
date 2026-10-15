@@ -169,10 +169,9 @@ async function handle(request, env) {
   if (request.headers.get("Origin") !== SITE_ORIGIN) return error("Origin is not allowed.", 403);
   if (!env.ADMIN_PASSWORD || env.ADMIN_PASSWORD.length < 16) return error("Admin access is not configured.", 503);
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-  if (method !== "GET" && !(await rateLimit(env.LOGIN_LIMIT, `login:${ip}`)))
-    return error("Too many attempts. Try again in a minute.", 429);
-
   if (method === "POST" && path === "/login") {
+    if (!(await rateLimit(env.LOGIN_LIMIT, `login:${ip}`)))
+      return error("Too many attempts. Try again in a minute.", 429);
     if (Number(request.headers.get("Content-Length")) > 1024) return error("Request is too large.", 413);
     let submitted;
     try { submitted = await request.json(); } catch { return error("Invalid request.", 400); }
@@ -180,8 +179,11 @@ async function handle(request, env) {
       return error("Incorrect password.", 401);
     return json({ ok: true });
   }
-  if (!(await matchesPassword(request.headers.get("X-Admin-Password"), env.ADMIN_PASSWORD)))
+  if (!(await matchesPassword(request.headers.get("X-Admin-Password"), env.ADMIN_PASSWORD))) {
+    if (!(await rateLimit(env.LOGIN_LIMIT, `login:${ip}`)))
+      return error("Too many attempts. Try again in a minute.", 429);
     return error("Incorrect password.", 401);
+  }
 
   if (method === "GET" && path === "/admin/catalog") {
     return json(await readCatalog(env, url.origin));
@@ -262,8 +264,7 @@ async function handle(request, env) {
     const catalog = await readCatalog(env, url.origin);
     let changed = 0;
     for (const item of catalog.items) {
-      const belongs = item.category === category &&
-        (item.kind === kind || (kind === "design" && item.kind === "slot"));
+      const belongs = item.category === category && item.kind === kind;
       if (!belongs || item.status === (action === "clear" ? "removed" : "active")) continue;
       item.status = action === "clear" ? "removed" : "active";
       item.removedAt = action === "clear" ? new Date().toISOString() : null;
