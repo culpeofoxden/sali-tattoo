@@ -79,11 +79,20 @@ async function rateLimit(binding, key) {
   return result.success;
 }
 
-async function isPublishedPhoto(sha256) {
+async function originalPathsForHash(sha256) {
   const response = await fetch(`${SITE_ORIGIN}/portfolio-uploads.json`);
   if (!response.ok) throw new Error("The published photo catalog is unavailable.");
-  const catalog = await response.json();
-  return catalog.known?.some((item) => item.sha256 === sha256) === true;
+  const manifest = await response.json();
+  return new Set((manifest.known || [])
+    .filter((item) => item.sha256 === sha256)
+    .map((item) => item.path));
+}
+
+async function duplicateInDestination(catalog, sha256, kind, category, replaceId) {
+  const originalPaths = await originalPathsForHash(sha256);
+  return catalog.items.some((item) => item.status === "active" && item.id !== replaceId &&
+    item.kind === kind && item.category === category &&
+    (item.sha256 === sha256 || originalPaths.has(item.path)));
 }
 
 async function readCatalog(env, origin) {
@@ -206,9 +215,10 @@ async function handle(request, env) {
       return error("The file is not a valid JPEG, PNG or WebP image.", 400);
     const digest = await crypto.subtle.digest("SHA-256", bytes);
     const sha256 = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-    if (await isPublishedPhoto(sha256)) return error("This exact image is already in the portfolio.", 409);
-    if (catalog.items.some((item) => item.sha256 === sha256))
-      return error("This exact image is already in the portfolio.", 409);
+    const destinationKind = replacing ? replacing.kind : kind;
+    const destinationCategory = replacing ? replacing.category : category;
+    if (await duplicateInDestination(catalog, sha256, destinationKind, destinationCategory, replaceId))
+      return error("This image is already in this collection.", 409);
     const imageId = crypto.randomUUID();
     const imagePath = `${url.origin}/photos/${imageId}/image`;
     const item = replacing ? {

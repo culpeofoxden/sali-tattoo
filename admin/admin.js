@@ -18,7 +18,6 @@ const categoryInput = $("#category");
 const fileInput = $("#photo");
 let password = "";
 let catalog = { items: [] };
-let knownHashes = new Set();
 let replacementId = null;
 let previewUrl = null;
 
@@ -65,10 +64,6 @@ if (!API_ROOT) {
   busy(connectForm, true);
   status("Photo publishing is not connected.", true);
 }
-fetch("../portfolio-uploads.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : null)
-  .then((manifest) => { knownHashes = new Set((manifest?.known || []).map((item) => item.sha256)); })
-  .catch(() => {});
-
 connectForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   password = $("#password").value;
@@ -104,10 +99,6 @@ fileInput.addEventListener("change", () => {
   if (file) $("#preview-image").src = previewUrl;
   else $("#preview-image").removeAttribute("src");
 });
-async function sha256(file) {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
 function resetReplacement() {
   replacementId = null;
   $("#replace-message").hidden = true;
@@ -142,18 +133,14 @@ uploadForm.addEventListener("submit", async (event) => {
     status("Choose a valid collection.", true); return;
   }
   busy(uploadForm, true);
-  status("Checking image…");
+  status("Uploading image…");
   try {
-    const hash = await sha256(file);
-    if (knownHashes.has(hash) || catalog.items.some((item) => item.sha256 === hash))
-      throw new Error("This exact image is already in the portfolio.");
     const form = new FormData();
     form.set("photo", file);
     form.set("title", $("#title").value.trim());
     form.set("alt", $("#alt").value.trim());
     if (replacementId) form.set("replaceId", replacementId);
     else { form.set("kind", kindInput.value); form.set("category", categoryInput.value); }
-    status("Uploading image…");
     const result = await api("/photos", { method: "POST", body: form });
     const index = catalog.items.findIndex((item) => item.id === result.item.id);
     if (index >= 0) catalog.items[index] = result.item;

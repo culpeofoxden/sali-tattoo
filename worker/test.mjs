@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import api from "./index.js";
 import baseCatalog from "../portfolio-catalog.json" with { type: "json" };
 
@@ -96,6 +97,61 @@ test("password access, upload, duplicate rejection, and deletion", async (t) => 
   const restored = await api.fetch(request(`/photos/${item.id}/restore`, "POST", { password: PASSWORD }), env);
   assert.equal(restored.status, 200);
   assert.equal((await restored.json()).item.status, "active");
+});
+
+test("removed images can be uploaded again and active images can be used in other collections", async (t) => {
+  t.mock.method(globalThis, "fetch", async (url) =>
+    new Response(JSON.stringify(String(url).endsWith("portfolio-catalog.json") ? baseCatalog : { known: [] }), { status: 200 }));
+  const env = environment();
+  const upload = (kind, category) => {
+    const form = new FormData();
+    form.set("photo", new File([PNG], "same.png", { type: "image/png" }));
+    form.set("kind", kind);
+    form.set("category", category);
+    form.set("title", "Same image");
+    form.set("alt", "A small drawing");
+    return api.fetch(request("/photos", "POST", { body: form, password: PASSWORD }), env);
+  };
+
+  const animals = await upload("design", "animals");
+  assert.equal(animals.status, 201);
+  const { item: first } = await animals.json();
+  assert.equal((await upload("design", "animals")).status, 409);
+  assert.equal((await api.fetch(request(`/photos/${first.id}`, "DELETE", { password: PASSWORD }), env)).status, 200);
+
+  assert.equal((await upload("design", "plants")).status, 201);
+  assert.equal((await upload("tattoo", "botanical")).status, 201);
+  const again = await upload("design", "animals");
+  assert.equal(again.status, 201);
+  assert.notEqual((await again.json()).item.id, first.id);
+  assert.equal((await upload("design", "plants")).status, 409);
+  const publicCatalog = await api.fetch(request("/catalog"), env);
+  const active = (await publicCatalog.json()).items;
+  assert.equal(active.filter((item) => item.sha256).length, 3);
+});
+
+test("original artwork blocks only its active destination collection", async (t) => {
+  const hash = createHash("sha256").update(PNG).digest("hex");
+  const original = baseCatalog.items[0];
+  t.mock.method(globalThis, "fetch", async (url) => new Response(JSON.stringify(
+    String(url).endsWith("portfolio-catalog.json") ? baseCatalog :
+      { known: [{ path: original.path, sha256: hash }] },
+  ), { status: 200 }));
+  const env = environment();
+  const upload = (category) => {
+    const form = new FormData();
+    form.set("photo", new File([PNG], "original.png", { type: "image/png" }));
+    form.set("kind", "tattoo");
+    form.set("category", category);
+    form.set("title", "Reused artwork");
+    form.set("alt", "An existing design reused in a gallery");
+    return api.fetch(request("/photos", "POST", { body: form, password: PASSWORD }), env);
+  };
+
+  assert.equal((await upload(original.category)).status, 409);
+  assert.equal((await upload("creatures")).status, 201);
+  assert.equal((await api.fetch(request(`/photos/${original.id}`, "DELETE", { password: PASSWORD }), env)).status, 200);
+  assert.equal((await upload(original.category)).status, 201);
 });
 
 test("rejects other origins, unauthenticated uploads, and disguised files", async (t) => {
