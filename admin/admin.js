@@ -232,7 +232,8 @@ function card(item) {
   const host = element("div", `manage-card${item.status === "removed" ? " is-removed" : ""}`);
   if (item.path) {
     const image = element("img");
-    image.src = item.path; image.alt = item.alt || item.title; image.loading = "lazy";
+    image.src = new URL(item.path, `${window.location.origin}/`).href;
+    image.alt = item.alt || item.title; image.loading = "lazy";
     host.append(image);
   } else host.append(element("div", "empty-photo", "No photo"));
   const info = element("div", "manage-card-info");
